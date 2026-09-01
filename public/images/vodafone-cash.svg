@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" width="240" height="60">
+  <!-- Red background pill -->
+  <rect width="240" height="60" rx="14" fill="#E60000"/>
+  
+  <!-- Vodafone Icon (Speech mark) -->
+  <g transform="translate(18, 12)">
+    <circle cx="18" cy="18" r="15" fill="#FFFFFF"/>
+    <path d="M 23,12 C 19,12 15,15 15,19 C 15,22 17,24 19,25.5 C 17,26.5 14,28 12,28 C 16,30 21,29 24,26 C 27,23 27,17 23,12 Z" fill="#E60000"/>
+  </g>
+  
+  <!-- Text: vodafone cash -->
+  <text x="60" y="32" font-family="'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="18" fill="#FFFFFF" letter-spacing="-0.5">vodafone</text>
+  <text x="148" y="32" font-family="'Segoe UI', Roboto, sans-serif" font-weight="400" font-size="18" fill="#FFB8B8" letter-spacing="0">cash</text>
+  <text x="60" y="47" font-family="'Tajawal', sans-serif" font-weight="700" font-size="13" fill="#FFFFFF" opacity="0.9">فودافون كاش</text>
+</svg>
