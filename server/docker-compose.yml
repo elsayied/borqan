@@ -1,0 +1,45 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: borqan_db
+      POSTGRES_USER: borqan_user
+      POSTGRES_PASSWORD: borqan_secure_password_99
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build: .
+    command: sh -c "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn borqan_backend.wsgi:application --bind 0.0.0.0:8000"
+    restart: always
+    volumes:
+      - .:/app
+      - media_data:/app/media
+    environment:
+      - DEBUG=False
+      - DB_HOST=db
+      - DB_NAME=borqan_db
+      - DB_USER=borqan_user
+      - DB_PASSWORD=borqan_secure_password_99
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  livekit:
+    image: livekit/livekit-server:v1.5
+    restart: always
+    command: --config /etc/livekit.yaml
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+      - "50000-60000:50000-60000/udp"
+
+volumes:
+  postgres_data:
+  media_data:
