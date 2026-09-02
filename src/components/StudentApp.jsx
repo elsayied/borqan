@@ -1,11 +1,51 @@
 import React, { useState } from 'react';
-import { BookOpen, Video, Mic, MicOff, VideoOff, PhoneOff, Play, Pause, Award, CheckCircle, FileText, Download, User, ArrowLeft, Volume2, Sparkles, Circle, ShieldCheck, Clock, MessageSquare, RefreshCw, Lock, CreditCard, Check, AlertCircle, Shield, Settings, Send, LogOut, Star, ShoppingBag, Edit3 } from 'lucide-react';
+import { BookOpen, Video, Mic, MicOff, VideoOff, PhoneOff, Play, Pause, Award, CheckCircle, FileText, Download, User, ArrowLeft, Volume2, Sparkles, Circle, ShieldCheck, Clock, MessageSquare, RefreshCw, Lock, CreditCard, Check, AlertCircle, Shield, Settings, Send, LogOut, Star, ShoppingBag, Edit3, Users, HeartHandshake, Plus, CheckSquare, BellRing } from 'lucide-react';
 import PaymentBadges from './PaymentBadges';
 
 export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
-  const [activeTab, setActiveTab] = useState('tutors'); // 'tutors' | 'call' | 'materials' | 'messages' | 'notes'
+  const [activeTab, setActiveTab] = useState('tutors'); // 'tutors' | 'call' | 'materials' | 'messages' | 'notes' | 'family'
   const [selectedTutor, setSelectedTutor] = useState(null);
   
+  // DUAL-MODE WORKFLOW SYSTEM: 'adult' (Independent Adult) | 'parent' (Parent-Managed Children)
+  const [accountMode, setAccountMode] = useState('parent'); // Default to parent for full demonstration
+
+  // Master Account State
+  const [masterAccount, setMasterAccount] = useState({
+    parentName: 'محمود عبد العزيز (ولي الأمر)',
+    parentPhone: '+20 101 234 5678',
+    parentWhatsapp: '+20 101 234 5678',
+    familySubscription: 'باقة العائلة الموحدة (20 جلسة)',
+    totalMinutesPool: 1200, // 20 hours / 20 sessions pool
+    allocatedMinutes: 800
+  });
+
+  // Parent-Managed Child Profiles Gateway List
+  const [childProfiles, setChildProfiles] = useState([
+    {
+      id: 'child_1',
+      name: 'عمر محمود (9 سنوات)',
+      age: 9,
+      allocatedSessions: 10,
+      sessionsCompleted: 6,
+      assignedTutor: 'الشيخ د. عبد الرحمن السعيد',
+      hifzProgress: 'جزء عم وجزء تبارك'
+    },
+    {
+      id: 'child_2',
+      name: 'مريم محمود (12 سنة)',
+      age: 12,
+      allocatedSessions: 10,
+      sessionsCompleted: 8,
+      assignedTutor: 'الشيخة أستاذة فاطمة الزهراء',
+      hifzProgress: 'سورة البقرة وآل عمران'
+    }
+  ]);
+
+  const [activeChildId, setActiveChildId] = useState('child_1');
+  const [showAddChildModal, setShowAddChildModal] = useState(false);
+  const [newChildName, setNewChildName] = useState('');
+  const [newChildAge, setNewChildAge] = useState('');
+
   // Student Auth & Subscription State
   const [studentUser, setStudentUser] = useState(() => {
     const saved = localStorage.getItem('borqan_student_user');
@@ -15,13 +55,13 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
       } catch (e) {}
     }
     return {
-      name: 'أحمد محمود',
+      name: 'عمر محمود (طفل)',
       telegramId: '@student_quran',
       phone: '+20 101 234 5678',
       isLoggedIn: true,
-      subscriptionStatus: 'active', // Active for full testing
-      activePlan: 'باقة الشهر الكامل (8 جلسات)',
-      sessionsLeft: 7,
+      subscriptionStatus: 'active',
+      activePlan: 'باقة العائلة الموحدة (10 جلسات مخصصة)',
+      sessionsLeft: 4,
       paymentRef: 'VOD-884920'
     };
   });
@@ -40,7 +80,7 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
   const [isMuted, setIsMuted] = useState(false);
   const [selectedSurah, setSelectedSurah] = useState('alfatiha');
 
-  // Post-Session 60-min Rating Modal State
+  // Post-Session Rating Modal State
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [sessionRating, setSessionRating] = useState(5);
   const [sessionReviewComment, setSessionReviewComment] = useState('');
@@ -48,13 +88,12 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
 
   // Student Direct Chat with Teacher State
   const [studentChatMessages, setStudentChatMessages] = useState([
-    { sender: 'teacher', text: 'السلام عليكم يا أحمد، أهلاً بك في جلسات القرآن. جاهز لمراجعة سورة الملك؟', time: '10:30 ص' },
-    { sender: 'student', text: 'وعليكم السلام يا شيخنا، نعم جاهز للتلاوة والتصحيح.', time: '10:31 ص' }
+    { sender: 'teacher', text: 'السلام عليكم، أهلاً بك في جلسات القرآن اليومية. جاهز للتلاوة؟', time: '10:30 ص' },
+    { sender: 'student', text: 'وعليكم السلام يا شيخنا، نعم جاهز لمراجعة السورة.', time: '10:31 ص' }
   ]);
   const [studentInputMsg, setStudentInputMsg] = useState('');
 
-  // Materials & Teacher Notes State
-  const [purchasedMaterials, setPurchasedMaterials] = useState([]);
+  // Student Session Notes State
   const [studentSessionNotes, setStudentSessionNotes] = useState([
     {
       id: 'note_1',
@@ -62,9 +101,31 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
       date: '2026-09-01',
       surahRevised: 'سورة الملك (الآيات 1-15)',
       weaknessPoints: 'ضعف في أحكام المد اللازم ومخارج حرف القاف والكاف.',
-      recommendation: 'التركيز على التكرار اليومي مع قراءة الشيخ الحصري 15 دقيقة.'
+      recommendation: 'تم إرسال تقرير المتابعة والتلاوة المسجلة لواتساب ولي الأمر مباشرة 📱.'
     }
   ]);
+
+  const handleAddChildSubmit = (e) => {
+    e.preventDefault();
+    if (!newChildName) return;
+
+    const createdChild = {
+      id: `child_${Date.now()}`,
+      name: `${newChildName} (${newChildAge || 10} سنوات)`,
+      age: Number(newChildAge) || 10,
+      allocatedSessions: 5,
+      sessionsCompleted: 0,
+      assignedTutor: 'لم يتم التعيين بعد',
+      hifzProgress: 'بداية الحفظ'
+    };
+
+    setChildProfiles([...childProfiles, createdChild]);
+    setShowAddChildModal(false);
+    setNewChildName('');
+    setNewChildAge('');
+  };
+
+  const activeChildObj = childProfiles.find(c => c.id === activeChildId) || childProfiles[0];
 
   const handleTelegramLoginSubmit = (e) => {
     if (e) e.preventDefault();
@@ -123,7 +184,6 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
 
   const handleEndCallSession = () => {
     setIsCalling(false);
-    // Prompt student for Post-Session Rating!
     setShowRatingModal(true);
   };
 
@@ -149,32 +209,20 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
 
   const handlePaymentSubmit = (e) => {
     e.preventDefault();
-
-    if (selectedPaymentMethod === 'fawry') {
-      const updated = {
-        ...studentUser,
-        subscriptionStatus: 'active',
-        activePlan: 'باقة الشهر الكامل (8 جلسات)',
-        sessionsLeft: 8
-      };
-      setStudentUser(updated);
-      localStorage.setItem('borqan_student_user', JSON.stringify(updated));
-      setPaymentSuccessMessage('تم التفعيل التلقائي الفوري عبر فوري بنجاح! تم فتح الجلسات المباشرة 🎉');
-      setTimeout(() => {
-        setShowPaymentModal(false);
-        setPaymentSuccessMessage('');
-        if (selectedTutor) handleStartCall(selectedTutor);
-      }, 2000);
-    } else {
-      const updated = {
-        ...studentUser,
-        subscriptionStatus: 'pending_manual',
-        paymentRef: vodafoneTxId || 'VOD-884920'
-      };
-      setStudentUser(updated);
-      localStorage.setItem('borqan_student_user', JSON.stringify(updated));
-      setPaymentSuccessMessage('تم استلام رقم عملية التحويل بنجاح! الطلب قيد التأكيد اليدوي من الإدارة الآن.');
-    }
+    const updated = {
+      ...studentUser,
+      subscriptionStatus: 'active',
+      activePlan: 'باقة الشهر الكامل (8 جلسات)',
+      sessionsLeft: 8
+    };
+    setStudentUser(updated);
+    localStorage.setItem('borqan_student_user', JSON.stringify(updated));
+    setPaymentSuccessMessage('تم التفعيل التلقائي الفوري بنجاح! تم فتح الجلسات المباشرة 🎉');
+    setTimeout(() => {
+      setShowPaymentModal(false);
+      setPaymentSuccessMessage('');
+      if (selectedTutor) handleStartCall(selectedTutor);
+    }, 2000);
   };
 
   const surahContent = {
@@ -201,13 +249,13 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
             <div className="w-16 h-16 rounded-3xl bg-peach-200/10 border border-peach-200/30 flex items-center justify-center text-peach-200 mb-2">
               <Send className="w-8 h-8" />
             </div>
-            <h2 className="text-2xl font-black text-white font-arabic">تسجيل دخول الطلاب عبر تليجرام 📱</h2>
-            <p className="text-xs text-slate-400">يجب تسجيل الدخول بحساب التليجرام الخاص بك عبر @burqan5_bot للوصول لتطبيق الطلاب.</p>
+            <h2 className="text-2xl font-black text-white font-arabic">تسجيل دخول منصة البرقَان 📱</h2>
+            <p className="text-xs text-slate-400">ادخل ببيانات حسابك لمتابعة الجلسات القرآنية وإدارة باقتك.</p>
           </div>
 
           <form onSubmit={handleTelegramLoginSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-300 block">اسم الطالب المسجل:</label>
+              <label className="text-xs font-bold text-slate-300 block">اسم الطالب / ولي الأمر:</label>
               <input
                 type="text"
                 required
@@ -241,11 +289,11 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
     );
   }
 
-  // IF AUTHENTICATED: RENDER FULL STUDENT APP
+  // IF AUTHENTICATED: RENDER DUAL-MODE STUDENT & PARENT WEB APP
   return (
     <div className="min-h-screen bg-rosewood-950 text-slate-100 font-arabic selection:bg-peach-200 selection:text-rosewood-950 flex flex-col">
       
-      {/* Top Header & Status Bar */}
+      {/* Top Header & Account Mode Switcher Bar */}
       <header className="bg-rosewood-900 border-b border-peach-200/15 py-3 sticky top-0 z-50 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           
@@ -264,33 +312,35 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
                   <BookOpen className="w-5 h-5" />
                 </div>
               </div>
-              <span className="text-lg font-black text-white font-quran">البرقَان <span className="text-xs font-sans text-peach-200 bg-peach-950 px-2 py-0.5 rounded-full border border-peach-200/20">تطبيق الطالب 📱</span></span>
+              <span className="text-lg font-black text-white font-quran">البرقَان <span className="text-xs font-sans text-peach-200 bg-peach-950 px-2 py-0.5 rounded-full border border-peach-200/20">تطبيق القرآن 📱</span></span>
             </div>
           </div>
 
-          {/* Student Account Status Badge */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-rosewood-950 px-3 py-1.5 rounded-2xl border border-peach-200/15 text-xs">
-              <User className="w-3.5 h-3.5 text-peach-200" />
-              <span className="font-bold text-white">{studentUser.name}</span>
-              <span className="text-[10px] text-peach-200 font-mono">({studentUser.telegramId})</span>
-              
-              {studentUser.subscriptionStatus === 'active' ? (
-                <span className="bg-emerald-950 text-emerald-300 font-bold px-2.5 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1">
-                  <CheckCircle className="w-3 h-3 text-emerald-400" />
-                  <span>اشتراك نشط ({studentUser.sessionsLeft} جلسة)</span>
-                </span>
-              ) : (
-                <button
-                  onClick={() => setShowPaymentModal(true)}
-                  className="bg-peach-200 text-rosewood-950 font-black px-3 py-0.5 rounded-full hover:bg-peach-100 transition-colors flex items-center gap-1"
-                >
-                  <Lock className="w-3 h-3" />
-                  <span>تفعيل الاشتراك</span>
-                </button>
-              )}
-            </div>
+          {/* DUAL-MODE PROFILE WORKFLOW TOGGLE (Adult vs Parent-Managed Child) */}
+          <div className="flex items-center gap-2 bg-rosewood-950 p-1.5 rounded-2xl border border-peach-200/20">
+            <button
+              onClick={() => setAccountMode('adult')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                accountMode === 'adult' ? 'bg-peach-200 text-rosewood-950 shadow-md' : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>حساب بالغ مستقل</span>
+            </button>
 
+            <button
+              onClick={() => setAccountMode('parent')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                accountMode === 'parent' ? 'bg-peach-200 text-rosewood-950 shadow-md' : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>حساب وليّ أمر (للأطفال) 👨‍👩‍👧‍👦</span>
+            </button>
+          </div>
+
+          {/* Student Status & Logout */}
+          <div className="flex items-center gap-3">
             <button
               onClick={handleStudentLogout}
               className="p-2 rounded-xl bg-rose-950/80 hover:bg-rose-900 border border-rose-800 text-rose-300 transition-colors"
@@ -302,6 +352,18 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
 
           {/* Navigation Tabs */}
           <nav className="flex items-center gap-1 bg-rosewood-950 p-1 rounded-2xl border border-peach-200/15">
+            {accountMode === 'parent' && (
+              <button
+                onClick={() => setActiveTab('family')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  activeTab === 'family' ? 'bg-peach-200 text-rosewood-950 shadow-md' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>إدارة العائلة والأبناء</span>
+              </button>
+            )}
+
             <button
               onClick={() => setActiveTab('tutors')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
@@ -329,7 +391,7 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
               }`}
             >
               <MessageSquare className="w-3.5 h-3.5" />
-              <span>محادثة المعلم</span>
+              <span>المحادثات</span>
             </button>
 
             <button
@@ -347,7 +409,92 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
       </header>
 
       {/* Main App Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 text-right space-y-6">
+
+        {/* PARENT-MANAGED NOTIFICATION BANNER (When in Parent Mode) */}
+        {accountMode === 'parent' && (
+          <div className="bg-rosewood-900 border border-peach-200/20 p-4 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-peach-200/10 border border-peach-200/30 flex items-center justify-center text-peach-200 shrink-0">
+                <BellRing className="w-5 h-5" />
+              </div>
+              <div className="space-y-0.5">
+                <span className="text-xs font-bold text-peach-200 block">نظام التزامن المباشر لواتساب ولي الأمر 📱</span>
+                <p className="text-xs text-slate-300">
+                  جميع تسجـيلات الجلسات وتنبيهات الحفظ وملاحظات المعلمين تُرسل مباشرة لرقم الواتساب الخاص بك: <strong className="text-white dir-ltr font-mono">{masterAccount.parentWhatsapp}</strong>
+                </p>
+              </div>
+            </div>
+
+            {/* Child Profile Selector Gateway */}
+            <div className="flex items-center gap-2 bg-rosewood-950 p-1.5 rounded-2xl border border-peach-200/15">
+              <span className="text-xs text-slate-400 font-bold px-2">الطفل الحالي:</span>
+              {childProfiles.map(c => (
+                <button
+                  key={c.id}
+                  onClick={() => setActiveChildId(c.id)}
+                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+                    activeChildId === c.id ? 'bg-peach-200 text-rosewood-950' : 'text-slate-300 hover:text-white'
+                  }`}
+                >
+                  {c.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB: FAMILY & CHILDREN MANAGEMENT (FOR PARENT MODE) */}
+        {activeTab === 'family' && accountMode === 'parent' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-rosewood-900 border border-peach-200/15 p-6 rounded-3xl">
+              <div>
+                <span className="text-xs text-peach-200 font-bold bg-peach-950 px-3 py-1 rounded-full border border-peach-200/20">
+                  بوابة إدارة الأبناء والفواتير الموحدة
+                </span>
+                <h2 className="text-xl font-bold text-white mt-1">حساب ولي الأمر: {masterAccount.parentName}</h2>
+                <p className="text-xs text-slate-400 mt-1">الفاتورة الموحدة: <strong className="text-white">{masterAccount.familySubscription}</strong> (تم تخصيص {masterAccount.allocatedMinutes} دقيقة للأبناء).</p>
+              </div>
+
+              <button
+                onClick={() => setShowAddChildModal(true)}
+                className="px-5 py-3 rounded-2xl bg-peach-200 text-rosewood-950 font-black text-xs hover:bg-peach-100 transition-all flex items-center gap-2 shadow-card shrink-0"
+              >
+                <Plus className="w-4 h-4 text-rosewood-950" />
+                <span>إضافة ملف طفل جديد للعائلة</span>
+              </button>
+            </div>
+
+            {/* Child Profiles Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {childProfiles.map(child => (
+                <div key={child.id} className="bg-rosewood-900 border border-peach-200/15 p-6 rounded-3xl space-y-4">
+                  <div className="flex items-center justify-between border-b border-peach-200/10 pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-peach-200/10 border border-peach-200/20 flex items-center justify-center text-peach-200 font-bold text-lg">
+                        👶
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-white text-base">{child.name}</h3>
+                        <span className="text-xs text-peach-200 block">المعلم المخصص: {child.assignedTutor}</span>
+                      </div>
+                    </div>
+
+                    <span className="px-3 py-1 rounded-full bg-emerald-950 text-emerald-300 font-bold text-xs border border-emerald-500/30">
+                      مخصص: {child.allocatedSessions} جلسة
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-rosewood-950 rounded-2xl border border-peach-200/10 text-xs space-y-1.5">
+                    <p><strong className="text-white">مستوى الحفظ الحالي:</strong> {child.hifzProgress}</p>
+                    <p><strong className="text-white">الجلسات المكتملة:</strong> {child.sessionsCompleted} من أصل {child.allocatedSessions} جلسة</p>
+                    <p className="text-peach-200 font-bold">إشعارات الحفظ والتسجيلات تصل لواتساب ولي الأمر تلقائياً ✅</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* TAB 1: LIVE TUTORS */}
         {activeTab === 'tutors' && (
@@ -379,7 +526,9 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
                     className="w-full py-3.5 rounded-2xl bg-peach-200 text-rosewood-950 font-black text-xs hover:bg-peach-100 transition-all flex items-center justify-center gap-2 shadow-card"
                   >
                     <Video className="w-4 h-4" />
-                    <span>بدء الاتصال المباشر الآن</span>
+                    <span>
+                      {accountMode === 'parent' ? `بدء الاتصال لطفلي (${activeChildObj.name})` : 'بدء الاتصال المباشر الآن'}
+                    </span>
                   </button>
                 </div>
               ))}
@@ -397,7 +546,9 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
                     جلسة نشطة 🟢 (Agora.io)
                   </span>
-                  <span className="text-xs text-slate-400">جلسات متبقية: {studentUser.sessionsLeft}</span>
+                  <span className="text-xs text-slate-400">
+                    {accountMode === 'parent' ? `الطفل: ${activeChildObj.name}` : `جلسات متبقية: ${studentUser.sessionsLeft}`}
+                  </span>
                 </div>
 
                 <div className="aspect-video bg-rosewood-950 rounded-2xl border border-peach-200/20 overflow-hidden relative">
@@ -437,7 +588,9 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
                 <img src={tutorsList[0].avatar} alt="Teacher Avatar" className="w-10 h-10 rounded-xl object-cover border border-peach-200/20" />
                 <div>
                   <h3 className="font-bold text-white text-sm">محادثة الشيخ د. عبد الرحمن السعيد</h3>
-                  <span className="text-[10px] text-emerald-400 font-bold block">متاح للتواصل المباشر 🟢</span>
+                  <span className="text-[10px] text-emerald-400 font-bold block">
+                    {accountMode === 'parent' ? `(محادثة تدار بواسطة ولي الأمر لـ ${activeChildObj.name})` : 'متاح للتواصل المباشر 🟢'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -503,11 +656,55 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
 
       </main>
 
+      {/* ADD CHILD PROFILE MODAL FOR PARENTS */}
+      {showAddChildModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-rosewood-950/80 backdrop-blur-md">
+          <div className="bg-rosewood-900 border-2 border-peach-200/30 rounded-3xl max-w-md w-full p-6 text-right space-y-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-peach-200/10 pb-4">
+              <h3 className="text-lg font-bold text-white">إضافة ملف طفل جديد للعائلة 👶</h3>
+              <button onClick={() => setShowAddChildModal(false)} className="text-slate-400 hover:text-white">✕</button>
+            </div>
+
+            <form onSubmit={handleAddChildSubmit} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-300 block">اسم الابن / الابنة:</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="مثال: يوسف محمود"
+                  value={newChildName}
+                  onChange={(e) => setNewChildName(e.target.value)}
+                  className="w-full p-3 bg-rosewood-950 border border-peach-200/20 rounded-xl text-xs text-white outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-300 block">العمر (بالسنوات):</label>
+                <input
+                  type="number"
+                  required
+                  placeholder="10"
+                  value={newChildAge}
+                  onChange={(e) => setNewChildAge(e.target.value)}
+                  className="w-full p-3 bg-rosewood-950 border border-peach-200/20 rounded-xl text-xs text-white outline-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3.5 rounded-2xl bg-peach-200 text-rosewood-950 font-black text-xs hover:bg-peach-100 transition-all shadow-card"
+              >
+                حفظ وإضافة لملف العائلة
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* POST-SESSION 60-MIN RATING MODAL 🌟 */}
       {showRatingModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-rosewood-950/80 backdrop-blur-md">
           <div className="bg-rosewood-900 border-2 border-peach-200/30 rounded-3xl max-w-md w-full p-6 text-right space-y-6 shadow-2xl">
-            
             <div className="text-center space-y-2">
               <div className="w-14 h-14 rounded-2xl bg-amber-400/20 text-amber-400 flex items-center justify-center mx-auto border border-amber-400/30">
                 <Star className="w-8 h-8 fill-amber-400" />
@@ -556,7 +753,6 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
                 </button>
               </form>
             )}
-
           </div>
         </div>
       )}
