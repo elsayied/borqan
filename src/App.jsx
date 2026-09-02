@@ -12,12 +12,26 @@ import DownloadModal from './components/DownloadModal';
 import FreeSessionModal from './components/FreeSessionModal';
 import TutorsLandingPage from './components/TutorsLandingPage';
 import StudentApp from './components/StudentApp';
+import ParentsPortal from './components/ParentsPortal';
 import AdminDashboard from './components/AdminDashboard';
+import UserRegistrationModal from './components/UserRegistrationModal';
 
 export default function App() {
   const [downloadModalOpen, setDownloadModalOpen] = useState(false);
   const [freeSessionModalOpen, setFreeSessionModalOpen] = useState(false);
-  
+  const [registrationModalOpen, setRegistrationModalOpen] = useState(false);
+
+  // Authenticated User State
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem('borqan_current_user');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return null; // Null means unauthenticated
+  });
+
   // Pending Vodafone Cash / InstaPay Requests State
   const [pendingRequests, setPendingRequests] = useState([
     {
@@ -29,16 +43,6 @@ export default function App() {
       amount: '350 EGP',
       txId: 'VOD-884920',
       status: 'pending'
-    },
-    {
-      id: 'req_102',
-      studentName: 'مريم السيد',
-      telegramId: '@maryam_quran',
-      phone: '+20 112 334 5566',
-      planName: 'باقة الشهرين (16 جلسة)',
-      amount: '650 EGP',
-      txId: 'INSTA-99214',
-      status: 'active'
     }
   ]);
 
@@ -53,16 +57,6 @@ export default function App() {
       certFile: 'ijazah_cert_bakri.pdf',
       status: 'pending',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300'
-    },
-    {
-      id: 'tut_app_2',
-      name: 'الشيخة عائشة النجار',
-      phone: '+966 50 123 4567',
-      experienceYears: '10',
-      ijazahDetails: 'إجازة بالقراءات السبع من مكة المكرمة',
-      certFile: 'ijazah_aysha.jpg',
-      status: 'approved',
-      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=300'
     }
   ]);
 
@@ -71,6 +65,7 @@ export default function App() {
     const hash = window.location.hash;
     if (path === '/tutors' || hash === '#/tutors') return 'tutors';
     if (path === '/app' || hash === '#/app') return 'app';
+    if (path === '/parents' || hash === '#/parents') return 'parents';
     if (path === '/admin' || hash === '#/admin') return 'admin';
     return 'students';
   });
@@ -81,6 +76,7 @@ export default function App() {
       const hash = window.location.hash;
       if (path === '/tutors' || hash === '#/tutors') setCurrentView('tutors');
       else if (path === '/app' || hash === '#/app') setCurrentView('app');
+      else if (path === '/parents' || hash === '#/parents') setCurrentView('parents');
       else if (path === '/admin' || hash === '#/admin') setCurrentView('admin');
       else setCurrentView('students');
     };
@@ -93,10 +89,32 @@ export default function App() {
   }, []);
 
   const navigateTo = (view) => {
+    // ACCESS CONTROL RULE: Only students (طالب / طالبة) can open /app!
+    if (view === 'app' && currentUser && (currentUser.role === 'وليّ أمر' || currentUser.role === 'وليّة أمر')) {
+      alert('بوابة الطلاب مخصصة للطلاب الجلسات المباشرة. تم توجيهك لبوابة أولياء الأمور المخصصة لولايتك.');
+      setCurrentView('parents');
+      window.history.pushState({}, '', '#/parents');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     setCurrentView(view);
-    const newHash = view === 'tutors' ? '#/tutors' : view === 'app' ? '#/app' : view === 'admin' ? '#/admin' : '#/';
+    const newHash = view === 'tutors' ? '#/tutors' : view === 'app' ? '#/app' : view === 'parents' ? '#/parents' : view === 'admin' ? '#/admin' : '#/';
     window.history.pushState({}, '', newHash);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleRegisterUser = (userData) => {
+    setCurrentUser(userData);
+    localStorage.setItem('borqan_current_user', JSON.stringify(userData));
+    setRegistrationModalOpen(false);
+
+    // Auto-redirect based on Account Role!
+    if (userData.role === 'وليّ أمر' || userData.role === 'وليّة أمر') {
+      navigateTo('parents');
+    } else {
+      navigateTo('app');
+    }
   };
 
   const handleApproveRequest = (id) => {
@@ -136,6 +154,17 @@ export default function App() {
       <StudentApp 
         onNavigateToLanding={() => navigateTo('students')} 
         onNavigateToAdmin={() => navigateTo('admin')}
+        currentUser={currentUser}
+      />
+    );
+  }
+
+  if (currentView === 'parents') {
+    return (
+      <ParentsPortal 
+        onNavigateToLanding={() => navigateTo('students')}
+        onNavigateToApp={() => navigateTo('app')}
+        currentUser={currentUser}
       />
     );
   }
@@ -162,9 +191,12 @@ export default function App() {
       <Navbar 
         onOpenDownload={() => setDownloadModalOpen(true)}
         onOpenFreeSession={() => setFreeSessionModalOpen(true)}
+        onOpenRegister={() => setRegistrationModalOpen(true)}
         onNavigateToTutors={() => navigateTo('tutors')}
         onNavigateToApp={() => navigateTo('app')}
+        onNavigateToParents={() => navigateTo('parents')}
         onNavigateToAdmin={() => navigateTo('admin')}
+        currentUser={currentUser}
       />
 
       <main>
@@ -172,6 +204,7 @@ export default function App() {
         <Hero 
           onOpenDownload={() => setDownloadModalOpen(true)}
           onOpenFreeSession={() => setFreeSessionModalOpen(true)}
+          onOpenRegister={() => setRegistrationModalOpen(true)}
           onNavigateToApp={() => navigateTo('app')}
         />
 
@@ -219,6 +252,12 @@ export default function App() {
         onClose={() => setFreeSessionModalOpen(false)}
         onNavigateToTutors={() => navigateTo('tutors')}
         onNavigateToApp={() => navigateTo('app')}
+      />
+
+      <UserRegistrationModal 
+        isOpen={registrationModalOpen}
+        onClose={() => setRegistrationModalOpen(false)}
+        onRegister={handleRegisterUser}
       />
 
     </div>

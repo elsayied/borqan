@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Menu, X, Download, PhoneCall, Globe, Sparkles, UserCheck } from 'lucide-react';
+import { BookOpen, Menu, X, Download, PhoneCall, Globe, Sparkles, UserCheck, User, Users } from 'lucide-react';
 
-export default function Navbar({ onOpenDownload, onOpenFreeSession, onNavigateToTutors, onNavigateToApp }) {
+export default function Navbar({ onOpenDownload, onOpenFreeSession, onOpenRegister, onNavigateToTutors, onNavigateToApp, onNavigateToParents, currentUser }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -65,44 +65,44 @@ export default function Navbar({ onOpenDownload, onOpenFreeSession, onNavigateTo
           {/* Action Buttons */}
           <div className="hidden sm:flex items-center gap-2">
             <button
-              onClick={onNavigateToApp}
+              onClick={onOpenRegister}
+              className="px-3 py-2 text-xs font-bold text-amber-300 bg-amber-950/80 border border-amber-400/30 rounded-xl hover:bg-amber-900 transition-all flex items-center gap-1.5"
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>{currentUser ? currentUser.name : 'تسجيل حساب جديد'}</span>
+            </button>
+
+            <button
+              onClick={onNavigateToParents}
               className="px-3 py-2 text-xs font-bold text-peach-200 hover:text-white bg-rosewood-900 border border-peach-200/20 rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
             >
-              <span>دخول التطبيق 📱</span>
+              <Users className="w-3.5 h-3.5" />
+              <span>أولياء الأمور (/parents)</span>
+            </button>
+
+            <button
+              onClick={onNavigateToApp}
+              className="px-3 py-2 text-xs font-bold text-emerald-300 hover:text-white bg-emerald-950 border border-emerald-500/30 rounded-xl transition-all flex items-center gap-1.5"
+            >
+              <span>تطبيق الطلاب (/app) 📱</span>
             </button>
 
             <button
               onClick={onNavigateToTutors}
-              className="px-3.5 py-2 text-xs font-bold text-amber-300 hover:text-amber-200 bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/30 rounded-xl transition-all flex items-center gap-1.5"
+              className="px-3 py-2 text-xs font-bold text-slate-300 hover:text-white bg-slate-900 border border-slate-800 rounded-xl transition-all flex items-center gap-1.5"
             >
-              <span>انضم كمعلّم 👨‍🏫</span>
-            </button>
-
-            <button
-              onClick={onOpenFreeSession}
-              className="px-4 py-2 text-sm font-semibold text-emerald-300 hover:text-white bg-emerald-950/80 hover:bg-emerald-900/80 border border-emerald-500/30 rounded-xl transition-all flex items-center gap-2"
-            >
-              <PhoneCall className="w-4 h-4 text-amber-400" />
-              <span>جلسة مجانية</span>
-            </button>
-
-            <button
-              onClick={onOpenDownload}
-              className="px-5 py-2.5 text-sm font-bold text-slate-950 bg-gradient-to-r from-amber-400 via-amber-300 to-emerald-400 hover:from-amber-300 hover:to-emerald-300 rounded-xl shadow-glow-gold hover:shadow-glow transition-all duration-300 transform hover:-translate-y-0.5 flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              <span>تحميل التطبيق</span>
+              <span>بوابة المعلمين 👨‍🏫</span>
             </button>
           </div>
 
           {/* Mobile Menu Button */}
           <div className="lg:hidden flex items-center gap-2">
             <button
-              onClick={onOpenDownload}
-              className="sm:hidden px-3 py-1.5 text-xs font-bold text-slate-950 bg-amber-400 rounded-lg flex items-center gap-1"
+              onClick={onOpenRegister}
+              className="sm:hidden px-3 py-1.5 text-xs font-bold text-amber-950 bg-amber-400 rounded-lg flex items-center gap-1"
             >
-              <Download className="w-3.5 h-3.5" />
-              <span>التطبيق</span>
+              <User className="w-3.5 h-3.5" />
+              <span>حساب جديد</span>
             </button>
 
             <button
@@ -115,40 +115,6 @@ export default function Navbar({ onOpenDownload, onOpenFreeSession, onNavigateTo
           </div>
         </div>
       </div>
-
-      {/* Mobile Drawer */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden bg-slate-950/95 border-b border-emerald-900/50 backdrop-blur-xl px-4 pt-4 pb-6 mt-3 space-y-3 animate-fadeIn">
-          <div className="grid grid-cols-2 gap-2">
-            {navLinks.map((link) => (
-              <a
-                key={link.name}
-                href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-200 bg-slate-900/80 hover:bg-emerald-950 hover:text-emerald-400 transition-colors text-right"
-              >
-                {link.name}
-              </a>
-            ))}
-          </div>
-          <div className="pt-2 flex flex-col gap-2">
-            <button
-              onClick={() => { setMobileMenuOpen(false); onOpenFreeSession(); }}
-              className="w-full py-3 text-sm font-semibold text-emerald-300 bg-emerald-950/80 border border-emerald-500/30 rounded-xl flex items-center justify-center gap-2"
-            >
-              <PhoneCall className="w-4 h-4 text-amber-400" />
-              <span>احجز جلسة مجانية تجريبية</span>
-            </button>
-            <button
-              onClick={() => { setMobileMenuOpen(false); onOpenDownload(); }}
-              className="w-full py-3 text-sm font-bold text-slate-950 bg-gradient-to-r from-amber-400 to-emerald-400 rounded-xl shadow-glow flex items-center justify-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              <span>حمل تطبيق البرقان الآن</span>
-            </button>
-          </div>
-        </div>
-      )}
     </header>
   );
 }
