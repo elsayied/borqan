@@ -1,0 +1,79 @@
+{
+  "appName": "Borqan",
+  "welcome": "Welcome to Borqan Quran Learning Platform",
+  "login": "Login",
+  "register": "Create Account",
+  "name": "Full Name",
+  "phone": "Phone / WhatsApp Number",
+  "age": "Age (years)",
+  "telegramId": "Telegram Username",
+  "role": "Account Type",
+  "student": "Male Student",
+  "studentFemale": "Female Student",
+  "parent": "Father (Parent)",
+  "parentFemale": "Mother (Parent)",
+  "selectRole": "Select your role to continue",
+  "logout": "Logout",
+  "directPayment": "Direct Service Payment",
+  "vodafoneCash": "Vodafone Cash",
+  "instaPay": "InstaPay",
+  "fawry": "Fawry",
+  "tabs": {
+    "home": "Home",
+    "tutors": "Tutors",
+    "study": "Study",
+    "messages": "Messages",
+    "more": "More"
+  },
+  "parentTabs": {
+    "children": "Children",
+    "messages": "Messages",
+    "billing": "Billing"
+  },
+  "home": {
+    "welcomeBack": "Welcome back,",
+    "activeSessions": "Active Sessions",
+    "sessionsLeft": "Sessions Left",
+    "progressSummary": "Hifz Progress Summary",
+    "quickActions": "Quick Actions",
+    "joinCall": "Join Live Session",
+    "browseTutors": "Browse Tutors"
+  },
+  "tutors": {
+    "title": "Certified Quran Tutors & Ijazah Holders",
+    "subtitle": "Choose your tutor or book a direct live session",
+    "specialty": "Specialty",
+    "ijazah": "Ijazah",
+    "rating": "Rating",
+    "students": "Students",
+    "callAudio": "Voice Call",
+    "callVideo": "Video Call",
+    "bookSession": "Book Session"
+  },
+  "study": {
+    "title": "Study Hub & Quran Challenges",
+    "subtitle": "MCQ quizzes, educational PDFs and video masterclasses",
+    "mcqQuizzes": "Tajweed MCQs",
+    "materials": "Educational Materials",
+    "free": "Free",
+    "paid": "Paid",
+    "startQuiz": "Start Quiz",
+    "download": "Download"
+  },
+  "messages": {
+    "title": "Teacher Notes & Direct Guidance",
+    "subtitle": "Assignments, weakness points & 2-way chat",
+    "typeMessage": "Type message to teacher...",
+    "send": "Send",
+    "teacherFeedback": "Teacher Feedback",
+    "weaknessPoints": "Areas for Improvement"
+  },
+  "more": {
+    "profile": "Profile",
+    "settings": "Settings",
+    "theme": "Theme (Dark / Light)",
+    "language": "Language (العربية / English)",
+    "paymentMethods": "Direct Payment Methods",
+    "helpSupport": "Help & Support"
+  }
+}
