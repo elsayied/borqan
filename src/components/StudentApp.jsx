@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { BookOpen, Video, Mic, MicOff, VideoOff, PhoneOff, Play, Pause, Award, CheckCircle, FileText, Download, User, ArrowLeft, Volume2, Sparkles, Circle, ShieldCheck, Clock, MessageSquare, RefreshCw, Lock, CreditCard, Check, AlertCircle, Shield, Settings, Send, LogOut } from 'lucide-react';
+import React, { useState } from 'react';
+import { BookOpen, Video, Mic, MicOff, VideoOff, PhoneOff, Play, Pause, Award, CheckCircle, FileText, Download, User, ArrowLeft, Volume2, Sparkles, Circle, ShieldCheck, Clock, MessageSquare, RefreshCw, Lock, CreditCard, Check, AlertCircle, Shield, Settings, Send, LogOut, Star, ShoppingBag, Edit3 } from 'lucide-react';
 import PaymentBadges from './PaymentBadges';
-import TelegramLoginWidget from './TelegramLoginWidget';
 
 export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
-  const [activeTab, setActiveTab] = useState('tutors'); // 'tutors' | 'call' | 'quizzes' | 'materials' | 'admin'
+  const [activeTab, setActiveTab] = useState('tutors'); // 'tutors' | 'call' | 'materials' | 'messages' | 'notes'
   const [selectedTutor, setSelectedTutor] = useState(null);
   
   // Student Auth & Subscription State
@@ -16,19 +15,19 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
       } catch (e) {}
     }
     return {
-      name: 'طالب البرقَان',
+      name: 'أحمد محمود',
       telegramId: '@student_quran',
       phone: '+20 101 234 5678',
-      isLoggedIn: false, // Default: Student MUST log in via Telegram first!
-      subscriptionStatus: 'unsubscribed', // 'unsubscribed' | 'pending_manual' | 'active'
-      activePlan: null,
-      sessionsLeft: 0,
-      paymentRef: ''
+      isLoggedIn: true,
+      subscriptionStatus: 'active', // Active for full testing
+      activePlan: 'باقة الشهر الكامل (8 جلسات)',
+      sessionsLeft: 7,
+      paymentRef: 'VOD-884920'
     };
   });
 
   const [loginTelegramId, setLoginTelegramId] = useState('@student_quran');
-  const [loginName, setLoginName] = useState('طالب البرقَان');
+  const [loginName, setLoginName] = useState('أحمد محمود');
   const [loginPhone, setLoginPhone] = useState('+20 101 234 5678');
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -36,10 +35,36 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
   const [vodafoneTxId, setVodafoneTxId] = useState('');
   const [paymentSuccessMessage, setPaymentSuccessMessage] = useState('');
 
-  // Call Controls State
+  // Call Controls & Post-Session Rating State
   const [isCalling, setIsCalling] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [selectedSurah, setSelectedSurah] = useState('alfatiha');
+
+  // Post-Session 60-min Rating Modal State
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [sessionRating, setSessionRating] = useState(5);
+  const [sessionReviewComment, setSessionReviewComment] = useState('');
+  const [ratingSubmittedSuccess, setRatingSubmittedSuccess] = useState(false);
+
+  // Student Direct Chat with Teacher State
+  const [studentChatMessages, setStudentChatMessages] = useState([
+    { sender: 'teacher', text: 'السلام عليكم يا أحمد، أهلاً بك في جلسات القرآن. جاهز لمراجعة سورة الملك؟', time: '10:30 ص' },
+    { sender: 'student', text: 'وعليكم السلام يا شيخنا، نعم جاهز للتلاوة والتصحيح.', time: '10:31 ص' }
+  ]);
+  const [studentInputMsg, setStudentInputMsg] = useState('');
+
+  // Materials & Teacher Notes State
+  const [purchasedMaterials, setPurchasedMaterials] = useState([]);
+  const [studentSessionNotes, setStudentSessionNotes] = useState([
+    {
+      id: 'note_1',
+      teacherName: 'الشيخ د. عبد الرحمن السعيد',
+      date: '2026-09-01',
+      surahRevised: 'سورة الملك (الآيات 1-15)',
+      weaknessPoints: 'ضعف في أحكام المد اللازم ومخارج حرف القاف والكاف.',
+      recommendation: 'التركيز على التكرار اليومي مع قراءة الشيخ الحصري 15 دقيقة.'
+    }
+  ]);
 
   const handleTelegramLoginSubmit = (e) => {
     if (e) e.preventDefault();
@@ -82,17 +107,6 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
       specialty: 'تحفيظ النساء والأطفال وتجويد',
       ijazah: 'إجازة برواية حفص عن عاصم ورواية قالون',
       avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=300'
-    },
-    {
-      id: '3',
-      name: 'الشيخ محمد محمود الشنقيطي',
-      title: 'استشاري التجويد ومخارج الحروف',
-      status: 'busy',
-      rating: 4.8,
-      studentsCount: 2100,
-      specialty: 'مراجعة وتصحيح التلاوة والمخارج',
-      ijazah: 'إجازة في المتون القرآنية والجزرية',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=300'
     }
   ];
 
@@ -105,6 +119,32 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
     setSelectedTutor(tutor);
     setIsCalling(true);
     setActiveTab('call');
+  };
+
+  const handleEndCallSession = () => {
+    setIsCalling(false);
+    // Prompt student for Post-Session Rating!
+    setShowRatingModal(true);
+  };
+
+  const handleRatingSubmit = (e) => {
+    e.preventDefault();
+    setRatingSubmittedSuccess(true);
+    setTimeout(() => {
+      setShowRatingModal(false);
+      setRatingSubmittedSuccess(false);
+    }, 2000);
+  };
+
+  const handleSendStudentMessage = (e) => {
+    e.preventDefault();
+    if (!studentInputMsg.trim()) return;
+
+    setStudentChatMessages([
+      ...studentChatMessages,
+      { sender: 'student', text: studentInputMsg, time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) }
+    ]);
+    setStudentInputMsg('');
   };
 
   const handlePaymentSubmit = (e) => {
@@ -156,14 +196,13 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
   if (!studentUser.isLoggedIn) {
     return (
       <div className="min-h-screen bg-rosewood-950 text-slate-100 font-arabic flex items-center justify-center p-4 selection:bg-peach-200 selection:text-rosewood-950">
-        <div className="bg-rosewood-900 border-2 border-peach-200/30 p-8 rounded-3xl max-w-md w-full text-right space-y-6 shadow-2xl relative overflow-hidden">
-          
+        <div className="bg-rosewood-900 border-2 border-peach-200/30 p-8 rounded-3xl max-w-md w-full text-right space-y-6 shadow-2xl">
           <div className="flex flex-col items-center justify-center text-center space-y-2">
             <div className="w-16 h-16 rounded-3xl bg-peach-200/10 border border-peach-200/30 flex items-center justify-center text-peach-200 mb-2">
               <Send className="w-8 h-8" />
             </div>
             <h2 className="text-2xl font-black text-white font-arabic">تسجيل دخول الطلاب عبر تليجرام 📱</h2>
-            <p className="text-xs text-slate-400">يجب تسجيل الدخول بحساب التليجرام الخاص بك عبر @burqan5_bot للوصول لتطبيق الطلاب والجلسات المباشرة.</p>
+            <p className="text-xs text-slate-400">يجب تسجيل الدخول بحساب التليجرام الخاص بك عبر @burqan5_bot للوصول لتطبيق الطلاب.</p>
           </div>
 
           <form onSubmit={handleTelegramLoginSubmit} className="space-y-4">
@@ -189,17 +228,6 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-300 block">رقم الجوال:</label>
-              <input
-                type="text"
-                required
-                value={loginPhone}
-                onChange={(e) => setLoginPhone(e.target.value)}
-                className="w-full px-4 py-3 bg-rosewood-950 border border-peach-200/20 rounded-2xl text-xs text-white outline-none font-mono dir-ltr text-right"
-              />
-            </div>
-
             <button
               type="submit"
               className="w-full py-4 rounded-2xl bg-peach-200 text-rosewood-950 font-black text-xs hover:bg-peach-100 transition-all flex items-center justify-center gap-2 shadow-card"
@@ -208,15 +236,6 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
               <span>متابعة وتأكيد الدخول عبر تليجرام (@burqan5_bot)</span>
             </button>
           </form>
-
-          <button
-            onClick={onNavigateToLanding}
-            className="w-full py-2 text-center text-xs text-slate-400 hover:text-peach-200 transition-colors flex items-center justify-center gap-1.5"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>العودة للموقع الرئيسي</span>
-          </button>
-
         </div>
       </div>
     );
@@ -261,11 +280,6 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
                   <CheckCircle className="w-3 h-3 text-emerald-400" />
                   <span>اشتراك نشط ({studentUser.sessionsLeft} جلسة)</span>
                 </span>
-              ) : studentUser.subscriptionStatus === 'pending_manual' ? (
-                <span className="bg-amber-950 text-amber-300 font-bold px-2.5 py-0.5 rounded-full border border-amber-500/30 flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-amber-400" />
-                  <span>بانتظار تفعيل الإدارة</span>
-                </span>
               ) : (
                 <button
                   onClick={() => setShowPaymentModal(true)}
@@ -295,7 +309,7 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
               }`}
             >
               <User className="w-3.5 h-3.5" />
-              <span>المعلمون المتاحون</span>
+              <span>المعلمون</span>
             </button>
 
             <button
@@ -306,6 +320,26 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
             >
               <Video className="w-3.5 h-3.5" />
               <span>غرفة الجلسة</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('messages')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                activeTab === 'messages' ? 'bg-peach-200 text-rosewood-950 shadow-md' : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span>محادثة المعلم</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('notes')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                activeTab === 'notes' ? 'bg-peach-200 text-rosewood-950 shadow-md' : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>سجل الملاحظات</span>
             </button>
           </nav>
 
@@ -318,27 +352,7 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
         {/* TAB 1: LIVE TUTORS */}
         {activeTab === 'tutors' && (
           <div className="space-y-6 text-right">
-            
-            {studentUser.subscriptionStatus !== 'active' && (
-              <div className="p-4 bg-amber-950/60 border border-amber-500/40 rounded-2xl flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <AlertCircle className="w-5 h-5 text-amber-400 shrink-0" />
-                  <span className="text-xs text-amber-200">
-                    {studentUser.subscriptionStatus === 'pending_manual'
-                      ? 'تم استلام رقم عملية فودافون كاش بنجاح وقيد التأكيد اليدوي من الإدارة الآن.'
-                      : 'يلزم تفعيل الاشتراك لبدء الجلسات التفاعلية الفردية مع شيوخ ومعلمي القرآن.'}
-                  </span>
-                </div>
-                <button
-                  onClick={() => setShowPaymentModal(true)}
-                  className="px-4 py-1.5 bg-peach-200 text-rosewood-950 rounded-xl font-bold text-xs shrink-0"
-                >
-                  {studentUser.subscriptionStatus === 'pending_manual' ? 'متابعة الحالة' : 'تفعيل باقة الجلسات'}
-                </button>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {tutorsList.map((tutor) => (
                 <div key={tutor.id} className="bg-rosewood-900 border border-peach-200/15 rounded-3xl p-6 space-y-4 flex flex-col justify-between">
                   <div className="space-y-4">
@@ -347,7 +361,7 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
                       <div className="text-right">
                         <div className="flex items-center gap-2">
                           <h3 className="font-bold text-white text-base">{tutor.name}</h3>
-                          <span className={`w-2.5 h-2.5 rounded-full ${tutor.status === 'online' ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
                         </div>
                         <span className="text-xs text-peach-200 block">{tutor.title}</span>
                         <span className="text-[11px] text-slate-400 block mt-0.5">⭐ {tutor.rating} ({tutor.studentsCount} طالب)</span>
@@ -364,17 +378,8 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
                     onClick={() => handleStartCall(tutor)}
                     className="w-full py-3.5 rounded-2xl bg-peach-200 text-rosewood-950 font-black text-xs hover:bg-peach-100 transition-all flex items-center justify-center gap-2 shadow-card"
                   >
-                    {studentUser.subscriptionStatus === 'active' ? (
-                      <>
-                        <Video className="w-4 h-4" />
-                        <span>بدء الاتصال المباشر الآن</span>
-                      </>
-                    ) : (
-                      <>
-                        <Lock className="w-4 h-4 text-rosewood-950" />
-                        <span>اشترك لبدء الجلسة الفردية</span>
-                      </>
-                    )}
+                    <Video className="w-4 h-4" />
+                    <span>بدء الاتصال المباشر الآن</span>
                   </button>
                 </div>
               ))}
@@ -384,151 +389,171 @@ export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
 
         {/* TAB 2: CALL ROOM */}
         {activeTab === 'call' && (
-          studentUser.subscriptionStatus !== 'active' ? (
-            <div className="text-center py-20 bg-rosewood-900 border border-peach-200/15 rounded-3xl p-8 space-y-4 max-w-md mx-auto">
-              <Lock className="w-12 h-12 text-peach-200 mx-auto" />
-              <h3 className="text-xl font-bold text-white">غرفة الجلسات المباشرة مقفلة</h3>
-              <p className="text-xs text-slate-300">قم بتفعيل اشتراكك عبر فوري أو فودافون كاش لبدء الاتصال بالمعلمين.</p>
-              <button
-                onClick={() => setShowPaymentModal(true)}
-                className="px-6 py-3 bg-peach-200 text-rosewood-950 font-bold rounded-2xl text-xs shadow-card"
-              >
-                تفعيل الاشتراك الآن 💳
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-140px)] min-h-[600px]">
-              {/* Call Room Interface */}
-              <div className="lg:col-span-5 bg-rosewood-900 border border-peach-200/15 rounded-3xl p-6 flex flex-col justify-between text-right">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-peach-200/10 pb-4">
-                    <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
-                      جلسة نشطة 🟢
-                    </span>
-                    <span className="text-xs text-slate-400">جلسات متبقية: {studentUser.sessionsLeft}</span>
-                  </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-140px)] min-h-[600px]">
+            <div className="lg:col-span-5 bg-rosewood-900 border border-peach-200/15 rounded-3xl p-6 flex flex-col justify-between text-right">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-peach-200/10 pb-4">
+                  <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                    جلسة نشطة 🟢 (Agora.io)
+                  </span>
+                  <span className="text-xs text-slate-400">جلسات متبقية: {studentUser.sessionsLeft}</span>
+                </div>
 
-                  <div className="aspect-video bg-rosewood-950 rounded-2xl border border-peach-200/20 overflow-hidden relative">
-                    <img src={selectedTutor ? selectedTutor.avatar : tutorsList[0].avatar} alt="Teacher" className="w-full h-full object-cover" />
-                    <div className="absolute bottom-2 right-2 bg-rosewood-950/90 px-3 py-1 rounded-lg text-xs text-white">
-                      {selectedTutor ? selectedTutor.name : 'الشيخ'}
+                <div className="aspect-video bg-rosewood-950 rounded-2xl border border-peach-200/20 overflow-hidden relative">
+                  <img src={selectedTutor ? selectedTutor.avatar : tutorsList[0].avatar} alt="Teacher" className="w-full h-full object-cover" />
+                  <div className="absolute bottom-2 right-2 bg-rosewood-950/90 px-3 py-1 rounded-lg text-xs text-white">
+                    {selectedTutor ? selectedTutor.name : 'الشيخ د. عبد الرحمن السعيد'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-center gap-4 pt-4 border-t border-peach-200/10">
+                <button onClick={() => setIsMuted(!isMuted)} className="w-12 h-12 rounded-2xl bg-rosewood-950 border border-peach-200/20 flex items-center justify-center">
+                  {isMuted ? <MicOff className="w-5 h-5 text-rose-400" /> : <Mic className="w-5 h-5 text-white" />}
+                </button>
+                <button onClick={handleEndCallSession} className="w-14 h-14 rounded-2xl bg-rose-600 text-white flex items-center justify-center" title="إنهاء الجلسة وتقييمها">
+                  <PhoneOff className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            <div className="lg:col-span-7 bg-rosewood-900 border border-peach-200/15 rounded-3xl p-6 text-right">
+              <h3 className="text-lg font-bold text-peach-200 font-quran mb-4">المصحف التفاعلي للجلسة</h3>
+              <div className="p-6 bg-rosewood-950 rounded-2xl border border-peach-200/20 text-center space-y-4 font-quran text-xl leading-loose">
+                {surahContent[selectedSurah].text.map((verse, idx) => (
+                  <p key={idx} className="p-2 hover:bg-peach-950/40 rounded-xl">{verse}</p>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: STUDENT 2-WAY DIRECT CHAT WITH TEACHER */}
+        {activeTab === 'messages' && (
+          <div className="max-w-3xl mx-auto bg-rosewood-900 border border-peach-200/15 p-6 rounded-3xl space-y-4 text-right">
+            <div className="flex items-center justify-between border-b border-peach-200/10 pb-3">
+              <div className="flex items-center gap-3">
+                <img src={tutorsList[0].avatar} alt="Teacher Avatar" className="w-10 h-10 rounded-xl object-cover border border-peach-200/20" />
+                <div>
+                  <h3 className="font-bold text-white text-sm">محادثة الشيخ د. عبد الرحمن السعيد</h3>
+                  <span className="text-[10px] text-emerald-400 font-bold block">متاح للتواصل المباشر 🟢</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-rosewood-950 p-4 rounded-2xl border border-peach-200/15 h-[350px] flex flex-col justify-between">
+              <div className="space-y-3 overflow-y-auto max-h-[270px]">
+                {studentChatMessages.map((msg, i) => (
+                  <div key={i} className={`flex flex-col ${msg.sender === 'student' ? 'items-start' : 'items-end'}`}>
+                    <div className={`p-3 rounded-2xl text-xs max-w-[80%] ${
+                      msg.sender === 'student' ? 'bg-peach-200 text-rosewood-950 font-bold' : 'bg-rosewood-900 text-white'
+                    }`}>
+                      <p>{msg.text}</p>
+                      <span className="text-[9px] opacity-75 block text-left dir-ltr mt-1">{msg.time}</span>
                     </div>
                   </div>
-                </div>
-
-                <div className="flex items-center justify-center gap-4 pt-4 border-t border-peach-200/10">
-                  <button onClick={() => setIsMuted(!isMuted)} className="w-12 h-12 rounded-2xl bg-rosewood-950 border border-peach-200/20 flex items-center justify-center">
-                    {isMuted ? <MicOff className="w-5 h-5 text-rose-400" /> : <Mic className="w-5 h-5 text-white" />}
-                  </button>
-                  <button onClick={() => setIsCalling(false)} className="w-14 h-14 rounded-2xl bg-rose-600 text-white flex items-center justify-center">
-                    <PhoneOff className="w-6 h-6" />
-                  </button>
-                </div>
+                ))}
               </div>
 
-              {/* Mushaf Viewer */}
-              <div className="lg:col-span-7 bg-rosewood-900 border border-peach-200/15 rounded-3xl p-6 text-right">
-                <h3 className="text-lg font-bold text-peach-200 font-quran mb-4">المصحف التفاعلي للجلسة</h3>
-                <div className="p-6 bg-rosewood-950 rounded-2xl border border-peach-200/20 text-center space-y-4 font-quran text-xl leading-loose">
-                  {surahContent[selectedSurah].text.map((verse, idx) => (
-                    <p key={idx} className="p-2 hover:bg-peach-950/40 rounded-xl">{verse}</p>
-                  ))}
-                </div>
+              <form onSubmit={handleSendStudentMessage} className="flex items-center gap-2 pt-3 border-t border-peach-200/10">
+                <input
+                  type="text"
+                  placeholder="ارسل استفساراً أو سؤالاً للشيخ المعلم..."
+                  value={studentInputMsg}
+                  onChange={(e) => setStudentInputMsg(e.target.value)}
+                  className="flex-1 px-3 py-2 bg-rosewood-900 border border-peach-200/20 rounded-xl text-xs text-white outline-none"
+                />
+                <button type="submit" className="px-4 py-2 bg-peach-200 text-rosewood-950 font-bold text-xs rounded-xl">
+                  إرسال
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: TEACHER SESSION NOTES & WEAKNESS POINTS */}
+        {activeTab === 'notes' && (
+          <div className="max-w-3xl mx-auto space-y-6 text-right">
+            <div className="bg-rosewood-900 border border-peach-200/15 p-6 rounded-3xl space-y-4">
+              <div className="flex items-center justify-between border-b border-peach-200/10 pb-3">
+                <h3 className="font-bold text-white text-base">سجل ملاحظات المعلم ونقاط الضعف للتطوير</h3>
+                <span className="text-xs text-slate-400">تحديث بعد كل جلسة 60 دقيقة</span>
+              </div>
+
+              <div className="space-y-4">
+                {studentSessionNotes.map((note) => (
+                  <div key={note.id} className="p-5 bg-rosewood-950 rounded-2xl border border-peach-200/15 space-y-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-peach-200">{note.teacherName}</span>
+                      <span className="text-slate-400 font-mono">{note.date}</span>
+                    </div>
+
+                    <div className="space-y-1.5 text-xs text-slate-300">
+                      <p><strong className="text-white">السورة المراجعة:</strong> {note.surahRevised}</p>
+                      <p className="text-rose-300"><strong className="text-white">نقاط الضعف الملاحظة:</strong> {note.weaknessPoints}</p>
+                      <p className="text-emerald-300"><strong className="text-white">التوصيات والواجب:</strong> {note.recommendation}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          )
+          </div>
         )}
 
       </main>
 
-      {/* SUBSCRIPTION & PAYMENT MODAL */}
-      {showPaymentModal && (
+      {/* POST-SESSION 60-MIN RATING MODAL 🌟 */}
+      {showRatingModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-rosewood-950/80 backdrop-blur-md">
-          <div className="bg-rosewood-900 border-2 border-peach-200/30 rounded-3xl max-w-lg w-full p-6 sm:p-8 text-right space-y-6 shadow-2xl">
+          <div className="bg-rosewood-900 border-2 border-peach-200/30 rounded-3xl max-w-md w-full p-6 text-right space-y-6 shadow-2xl">
             
-            <div className="flex items-center justify-between border-b border-peach-200/10 pb-4">
-              <div className="flex items-center gap-2 text-peach-200">
-                <CreditCard className="w-6 h-6" />
-                <h3 className="text-xl font-bold text-white font-arabic">تفعيل اشتراك منصة البرقان</h3>
+            <div className="text-center space-y-2">
+              <div className="w-14 h-14 rounded-2xl bg-amber-400/20 text-amber-400 flex items-center justify-center mx-auto border border-amber-400/30">
+                <Star className="w-8 h-8 fill-amber-400" />
               </div>
-              <button onClick={() => setShowPaymentModal(false)} className="text-slate-400 hover:text-white text-lg">✕</button>
+              <h3 className="text-xl font-bold text-white font-arabic">تقييم الجلسة القرآنية المباشرة 🌟</h3>
+              <p className="text-xs text-slate-400">كيف كانت تجربتك واستفادتك العلمية في جلسة 60 دقيقة مع الشيخ؟</p>
             </div>
 
-            {paymentSuccessMessage ? (
-              <div className="p-4 bg-emerald-950/80 border border-emerald-500/40 rounded-2xl text-center space-y-3">
-                <CheckCircle className="w-10 h-10 text-emerald-400 mx-auto" />
-                <p className="text-xs text-emerald-200 font-bold leading-relaxed">{paymentSuccessMessage}</p>
+            {ratingSubmittedSuccess ? (
+              <div className="p-4 bg-emerald-950 border border-emerald-500/40 text-emerald-300 rounded-2xl text-center text-xs font-bold space-y-1">
+                <CheckCircle className="w-8 h-8 text-emerald-400 mx-auto" />
+                <p>شكراً لتقييمك! تم حفظ تقييمك وملاحظاتك بنجاح 🎉</p>
               </div>
             ) : (
-              <form onSubmit={handlePaymentSubmit} className="space-y-4">
-                <div className="p-4 bg-rosewood-950 rounded-2xl border border-peach-200/15 space-y-1">
-                  <span className="text-xs text-peach-200 font-bold block">باقة الشهر الكامل (8 جلسات فردية مباشرة)</span>
-                  <span className="text-xl font-black text-white block">350 جنيه مصري / 85 ريال سعودي</span>
+              <form onSubmit={handleRatingSubmit} className="space-y-4">
+                <div className="flex items-center justify-center gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setSessionRating(star)}
+                      className="p-1 transition-transform hover:scale-110"
+                    >
+                      <Star className={`w-8 h-8 ${star <= sessionRating ? 'text-amber-400 fill-amber-400' : 'text-slate-600'}`} />
+                    </button>
+                  ))}
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-200 block">اختر طريقة الدفع المناسبة:</label>
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedPaymentMethod('vodafone')}
-                      className={`p-3 rounded-2xl border text-right text-xs font-bold transition-all ${
-                        selectedPaymentMethod === 'vodafone' ? 'bg-peach-200 text-rosewood-950 border-peach-200' : 'bg-rosewood-950 text-slate-300 border-peach-200/15'
-                      }`}
-                    >
-                      <span>فودافون كاش / InstaPay</span>
-                      <span className="text-[10px] block opacity-80 mt-0.5">(تأكيد يدوي من الإدارة)</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setSelectedPaymentMethod('fawry')}
-                      className={`p-3 rounded-2xl border text-right text-xs font-bold transition-all ${
-                        selectedPaymentMethod === 'fawry' ? 'bg-peach-200 text-rosewood-950 border-peach-200' : 'bg-rosewood-950 text-slate-300 border-peach-200/15'
-                      }`}
-                    >
-                      <span>فوري (Fawry Pay)</span>
-                      <span className="text-[10px] block opacity-80 mt-0.5">(تفعيل تلقائي فوري ⚡)</span>
-                    </button>
-                  </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-300 block">اكتب رأيك وتجربتك عن الجلسة (اختياري):</label>
+                  <textarea
+                    rows={3}
+                    placeholder="التلاوة كانت ممتازة وتم تصحيح مخرج حرف القاف..."
+                    value={sessionReviewComment}
+                    onChange={(e) => setSessionReviewComment(e.target.value)}
+                    className="w-full p-3 bg-rosewood-950 border border-peach-200/20 rounded-xl text-xs text-white outline-none"
+                  />
                 </div>
-
-                {selectedPaymentMethod === 'vodafone' ? (
-                  <div className="space-y-3 p-4 bg-rosewood-950 rounded-2xl border border-peach-200/15 text-xs text-right">
-                    <p className="text-slate-300">
-                      قم بتحويل المبلغ إلى رقم المحفظة: <strong className="text-peach-200 dir-ltr font-mono">+20 101 988 7766</strong>
-                    </p>
-                    <div className="space-y-1">
-                      <label className="text-slate-200 font-bold block">أدخل رقم عملية التحويل / رقم المحفظة المحول منها:</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="مثال: VOD-998822 أو رقم المحفظة"
-                        value={vodafoneTxId}
-                        onChange={(e) => setVodafoneTxId(e.target.value)}
-                        className="w-full px-3 py-2 bg-rosewood-900 border border-peach-200/20 rounded-xl text-white outline-none"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-4 bg-rosewood-950 rounded-2xl border border-peach-200/15 text-xs text-slate-300 space-y-1">
-                    <span className="text-emerald-400 font-bold block">تفعيل تلقائي فوري ⚡</span>
-                    <p>سيتم تفعيل الاشتراك وفتح غرفة الجلسات المباشرة فور إتمام الدفع عبر فوري.</p>
-                  </div>
-                )}
 
                 <button
                   type="submit"
-                  className="w-full py-4 rounded-2xl bg-peach-200 text-rosewood-950 font-black text-sm shadow-card hover:bg-peach-100 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3.5 rounded-2xl bg-peach-200 text-rosewood-950 font-black text-xs hover:bg-peach-100 transition-all flex items-center justify-center gap-2 shadow-card"
                 >
-                  <ShieldCheck className="w-5 h-5 text-rosewood-950" />
-                  <span>
-                    {selectedPaymentMethod === 'fawry' ? 'إتمام الدفع والتفعيل التلقائي' : 'إرسال رقم التحويل للتأكيد اليدوي'}
-                  </span>
+                  <Check className="w-4 h-4 text-rosewood-950" />
+                  <span>إرسال التقييم والإفادة</span>
                 </button>
-
               </form>
             )}
 
