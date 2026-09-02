@@ -1,19 +1,48 @@
 import React, { useState } from 'react';
-import { BookOpen, Users, BellRing, Plus, CheckCircle, Video, MessageSquare, CreditCard, Clock, UserCheck, ShieldCheck, ArrowLeft, HeartHandshake, Phone, Edit3, Send } from 'lucide-react';
+import { BookOpen, Users, BellRing, Plus, CheckCircle, Video, MessageSquare, CreditCard, Clock, UserCheck, ShieldCheck, ArrowLeft, HeartHandshake, Phone, Edit3, Send, Lock, LogOut } from 'lucide-react';
 
 export default function ParentsPortal({ onNavigateToLanding, onNavigateToApp, currentUser }) {
-  const [activeParentTab, setActiveParentTab] = useState('children'); // 'children' | 'billing' | 'messages' | 'whatsapp'
-  
-  // Master Parent State
-  const [parentAccount, setParentAccount] = useState({
-    name: currentUser?.name || 'محمود عبد العزيز',
-    role: currentUser?.role || 'وليّ أمر', // 'وليّ أمر' | 'وليّة أمر'
-    phone: currentUser?.phone || '+20 101 234 5678',
-    whatsapp: currentUser?.phone || '+20 101 234 5678',
-    familySubscription: 'باقة العائلة الموحدة (20 جلسة شهرياً)',
-    sessionsPoolTotal: 20,
-    sessionsAllocated: 16
+  const [activeParentTab, setActiveParentTab] = useState('children'); // 'children' | 'billing' | 'messages'
+
+  // STRICT PARENT AUTHENTICATION GUARD STATE
+  const [parentAccount, setParentAccount] = useState(() => {
+    if (currentUser && (currentUser.role === 'وليّ أمر' || currentUser.role === 'وليّة أمر')) {
+      return {
+        name: currentUser.name,
+        role: currentUser.role,
+        phone: currentUser.phone || '+20 101 234 5678',
+        whatsapp: currentUser.phone || '+20 101 234 5678',
+        isLoggedIn: true,
+        familySubscription: 'باقة العائلة الموحدة (20 جلسة شهرياً)',
+        sessionsPoolTotal: 20,
+        sessionsAllocated: 16
+      };
+    }
+
+    const saved = localStorage.getItem('borqan_parent_user');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.isLoggedIn) return parsed;
+      } catch (e) {}
+    }
+
+    // STRICTLY UNAUTHENTICATED BY DEFAULT
+    return {
+      name: '',
+      role: 'وليّ أمر',
+      phone: '',
+      whatsapp: '',
+      isLoggedIn: false,
+      familySubscription: 'باقة العائلة الموحدة (20 جلسة شهرياً)',
+      sessionsPoolTotal: 20,
+      sessionsAllocated: 16
+    };
   });
+
+  const [loginParentName, setLoginParentName] = useState('محمود عبد العزيز');
+  const [loginParentRole, setLoginParentRole] = useState('وليّ أمر');
+  const [loginParentPhone, setLoginParentPhone] = useState('+20 101 234 5678');
 
   // Children Managed Profiles
   const [childrenList, setChildrenList] = useState([
@@ -54,6 +83,29 @@ export default function ParentsPortal({ onNavigateToLanding, onNavigateToApp, cu
   ]);
   const [parentInputMsg, setParentInputMsg] = useState('');
 
+  const handleParentLoginSubmit = (e) => {
+    e.preventDefault();
+    if (!loginParentName || !loginParentPhone) return;
+
+    const loggedInUser = {
+      ...parentAccount,
+      name: loginParentName,
+      role: loginParentRole,
+      phone: loginParentPhone,
+      whatsapp: loginParentPhone,
+      isLoggedIn: true
+    };
+
+    setParentAccount(loggedInUser);
+    localStorage.setItem('borqan_parent_user', JSON.stringify(loggedInUser));
+  };
+
+  const handleParentLogout = () => {
+    const loggedOut = { ...parentAccount, isLoggedIn: false };
+    setParentAccount(loggedOut);
+    localStorage.removeItem('borqan_parent_user');
+  };
+
   const handleAddChildSubmit = (e) => {
     e.preventDefault();
     if (!newChildName) return;
@@ -87,6 +139,94 @@ export default function ParentsPortal({ onNavigateToLanding, onNavigateToApp, cu
     setParentInputMsg('');
   };
 
+  // IF PARENT IS NOT LOGGED IN: RENDER PARENT AUTHENTICATION GUARD 🔒👨‍👩‍👧‍👦
+  if (!parentAccount.isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-rosewood-950 text-slate-100 font-arabic flex items-center justify-center p-4 selection:bg-peach-200 selection:text-rosewood-950">
+        <div className="bg-rosewood-900 border-2 border-peach-200/30 p-8 rounded-3xl max-w-md w-full text-right space-y-6 shadow-2xl">
+          <div className="flex flex-col items-center justify-center text-center space-y-2">
+            <div className="w-16 h-16 rounded-3xl bg-peach-200/10 border border-peach-200/30 flex items-center justify-center text-peach-200 mb-2 shadow-glow">
+              <Lock className="w-8 h-8" />
+            </div>
+            <h2 className="text-2xl font-black text-white font-arabic">تسجيل دخول أولياء الأمور 🔒👨‍👩‍👧‍👦</h2>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              هذه البوابة مخصصة لأولياء الأمور لمتابعة الأبناء وتلقي تقارير الواتساب وإدارة الفاتورة الموحدة.
+            </p>
+          </div>
+
+          <form onSubmit={handleParentLoginSubmit} className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-300 block">نوع الصفة:</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setLoginParentRole('وليّ أمر')}
+                  className={`p-3 rounded-2xl border text-xs font-bold transition-all ${
+                    loginParentRole === 'وليّ أمر' ? 'bg-peach-200 text-rosewood-950 border-peach-200' : 'bg-rosewood-950 text-slate-300 border-peach-200/15'
+                  }`}
+                >
+                  👨‍👦 وليّ أمر (أب)
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setLoginParentRole('وليّة أمر')}
+                  className={`p-3 rounded-2xl border text-xs font-bold transition-all ${
+                    loginParentRole === 'وليّة أمر' ? 'bg-peach-200 text-rosewood-950 border-peach-200' : 'bg-rosewood-950 text-slate-300 border-peach-200/15'
+                  }`}
+                >
+                  👩‍👦 وليّة أمر (أم)
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-300 block">اسم وليّ / وليّة الأمر:</label>
+              <input
+                type="text"
+                required
+                placeholder="محمود عبد العزيز"
+                value={loginParentName}
+                onChange={(e) => setLoginParentName(e.target.value)}
+                className="w-full px-4 py-3 bg-rosewood-950 border border-peach-200/20 rounded-2xl text-xs text-white outline-none"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-300 block">رقم الجوال / الواتساب للإشعارات:</label>
+              <input
+                type="tel"
+                required
+                placeholder="+20 101 234 5678"
+                value={loginParentPhone}
+                onChange={(e) => setLoginParentPhone(e.target.value)}
+                className="w-full px-4 py-3 bg-rosewood-950 border border-peach-200/20 rounded-2xl text-xs text-white outline-none font-mono dir-ltr text-right"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-4 rounded-2xl bg-peach-200 text-rosewood-950 font-black text-xs hover:bg-peach-100 transition-all flex items-center justify-center gap-2 shadow-card"
+            >
+              <Send className="w-4 h-4 text-rosewood-950" />
+              <span>دخول بوابة أولياء الأمور (/parents)</span>
+            </button>
+          </form>
+
+          <div className="pt-2 text-center">
+            <button
+              onClick={onNavigateToLanding}
+              className="text-xs text-slate-400 hover:text-peach-200 underline"
+            >
+              العودة للموقع الرئيسي
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // IF AUTHENTICATED PARENT: RENDER FULL PARENTS PORTAL
   return (
     <div className="min-h-screen bg-rosewood-950 text-slate-100 font-arabic selection:bg-peach-200 selection:text-rosewood-950 flex flex-col">
       
@@ -109,7 +249,7 @@ export default function ParentsPortal({ onNavigateToLanding, onNavigateToApp, cu
                 <h1 className="text-lg font-black text-white font-arabic flex items-center gap-2">
                   <span>بوابة أولياء الأمور (/parents)</span>
                   <span className="text-xs bg-peach-950 text-peach-200 font-bold px-2.5 py-0.5 rounded-full border border-peach-200/20">
-                    {parentAccount.role}
+                    {parentAccount.role}: {parentAccount.name}
                   </span>
                 </h1>
                 <span className="text-[11px] text-slate-400">متابعة الأبناء والتزامن الفوري عبر الواتساب والفواتير الموحدة</span>
@@ -117,37 +257,47 @@ export default function ParentsPortal({ onNavigateToLanding, onNavigateToApp, cu
             </div>
           </div>
 
-          {/* Navigation Tabs inside Parents Portal */}
-          <div className="flex items-center gap-2 bg-rosewood-950 p-1.5 rounded-2xl border border-peach-200/20">
+          <div className="flex items-center gap-3">
             <button
-              onClick={() => setActiveParentTab('children')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                activeParentTab === 'children' ? 'bg-peach-200 text-rosewood-950 shadow-md' : 'text-slate-300 hover:text-white'
-              }`}
+              onClick={handleParentLogout}
+              className="p-2 rounded-xl bg-rose-950/80 hover:bg-rose-900 border border-rose-800 text-rose-300 transition-colors"
+              title="تسجيل الخروج"
             >
-              <Users className="w-4 h-4" />
-              <span>متابعة الأبناء ({childrenList.length})</span>
+              <LogOut className="w-4 h-4" />
             </button>
 
-            <button
-              onClick={() => setActiveParentTab('messages')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                activeParentTab === 'messages' ? 'bg-peach-200 text-rosewood-950 shadow-md' : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              <MessageSquare className="w-4 h-4" />
-              <span>المحادثة مع المعلمين</span>
-            </button>
+            {/* Navigation Tabs inside Parents Portal */}
+            <div className="flex items-center gap-2 bg-rosewood-950 p-1.5 rounded-2xl border border-peach-200/20">
+              <button
+                onClick={() => setActiveParentTab('children')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  activeParentTab === 'children' ? 'bg-peach-200 text-rosewood-950 shadow-md' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                <span>متابعة الأبناء ({childrenList.length})</span>
+              </button>
 
-            <button
-              onClick={() => setActiveParentTab('billing')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                activeParentTab === 'billing' ? 'bg-peach-200 text-rosewood-950 shadow-md' : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              <CreditCard className="w-4 h-4" />
-              <span>الفاتورة الموحدة والتوزيع</span>
-            </button>
+              <button
+                onClick={() => setActiveParentTab('messages')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  activeParentTab === 'messages' ? 'bg-peach-200 text-rosewood-950 shadow-md' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span>المحادثة مع المعلمين</span>
+              </button>
+
+              <button
+                onClick={() => setActiveParentTab('billing')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  activeParentTab === 'billing' ? 'bg-peach-200 text-rosewood-950 shadow-md' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                <CreditCard className="w-4 h-4" />
+                <span>الفاتورة الموحدة والتوزيع</span>
+              </button>
+            </div>
           </div>
 
         </div>
