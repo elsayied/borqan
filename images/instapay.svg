@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" width="240" height="60">
+  <!-- Dark Purple Pill background -->
+  <rect width="240" height="60" rx="14" fill="#3D1466"/>
+  
+  <!-- InstaPay Icon symbol -->
+  <g transform="translate(18, 12)">
+    <circle cx="18" cy="18" r="16" fill="#5F259F"/>
+    <!-- Interlocking arrows icon -->
+    <path d="M12 12 L22 12 L22 16 L12 16 Z" fill="#00B894"/>
+    <path d="M18 16 L24 22 L18 28 L14 24 L18 20 Z" fill="#00B894"/>
+    <circle cx="22" cy="14" r="3" fill="#FFFFFF"/>
+    <circle cx="14" cy="22" r="3" fill="#FFFFFF"/>
+  </g>
+  
+  <!-- Text: instapay -->
+  <text x="62" y="32" font-family="'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="20" fill="#FFFFFF" letter-spacing="-0.5">insta<tspan fill="#00B894">pay</tspan></text>
+  <text x="62" y="47" font-family="'Tajawal', sans-serif" font-weight="700" font-size="12" fill="#D8B4FE">إنستاباي (IPN)</text>
+</svg>
