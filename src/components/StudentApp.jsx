@@ -1,39 +1,64 @@
-import React, { useState } from 'react';
-import { BookOpen, Video, Mic, MicOff, VideoOff, PhoneOff, Play, Pause, Award, CheckCircle, FileText, Download, User, ArrowLeft, Volume2, Sparkles, Circle, ShieldCheck, Clock, MessageSquare, RefreshCw, Lock, CreditCard, Check, AlertCircle, Shield, Settings } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { BookOpen, Video, Mic, MicOff, VideoOff, PhoneOff, Play, Pause, Award, CheckCircle, FileText, Download, User, ArrowLeft, Volume2, Sparkles, Circle, ShieldCheck, Clock, MessageSquare, RefreshCw, Lock, CreditCard, Check, AlertCircle, Shield, Settings, Send, LogOut } from 'lucide-react';
 import PaymentBadges from './PaymentBadges';
+import TelegramLoginWidget from './TelegramLoginWidget';
 
-export default function StudentApp({ onNavigateToLanding }) {
+export default function StudentApp({ onNavigateToLanding, onNavigateToAdmin }) {
   const [activeTab, setActiveTab] = useState('tutors'); // 'tutors' | 'call' | 'quizzes' | 'materials' | 'admin'
   const [selectedTutor, setSelectedTutor] = useState(null);
   
   // Student Auth & Subscription State
-  const [studentUser, setStudentUser] = useState({
-    name: 'أحمد محمود',
-    phone: '+20 101 234 5678',
-    isLoggedIn: true,
-    subscriptionStatus: 'unsubscribed', // 'unsubscribed' | 'pending_manual' | 'active'
-    activePlan: null,
-    sessionsLeft: 0,
-    paymentRef: ''
+  const [studentUser, setStudentUser] = useState(() => {
+    const saved = localStorage.getItem('borqan_student_user');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return {
+      name: 'طالب البرقَان',
+      telegramId: '@student_quran',
+      phone: '+20 101 234 5678',
+      isLoggedIn: false, // Default: Student MUST log in via Telegram first!
+      subscriptionStatus: 'unsubscribed', // 'unsubscribed' | 'pending_manual' | 'active'
+      activePlan: null,
+      sessionsLeft: 0,
+      paymentRef: ''
+    };
   });
 
+  const [loginTelegramId, setLoginTelegramId] = useState('@student_quran');
+  const [loginName, setLoginName] = useState('طالب البرقَان');
+  const [loginPhone, setLoginPhone] = useState('+20 101 234 5678');
+
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('vodafone'); // 'vodafone' | 'instapay' | 'fawry' | 'visa'
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('vodafone');
   const [vodafoneTxId, setVodafoneTxId] = useState('');
   const [paymentSuccessMessage, setPaymentSuccessMessage] = useState('');
 
   // Call Controls State
   const [isCalling, setIsCalling] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [isVideoOff, setIsVideoOff] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
   const [selectedSurah, setSelectedSurah] = useState('alfatiha');
 
-  // Quiz Engine State
-  const [quizScore, setQuizScore] = useState(0);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selectedOption, setSelectedOption] = useState(null);
-  const [quizCompleted, setQuizCompleted] = useState(false);
+  const handleTelegramLoginSubmit = (e) => {
+    if (e) e.preventDefault();
+    const updatedUser = {
+      ...studentUser,
+      name: loginName || 'طالب البرقَان',
+      telegramId: loginTelegramId || '@student_quran',
+      phone: loginPhone || '+20 101 234 5678',
+      isLoggedIn: true
+    };
+    setStudentUser(updatedUser);
+    localStorage.setItem('borqan_student_user', JSON.stringify(updatedUser));
+  };
+
+  const handleStudentLogout = () => {
+    const loggedOutUser = { ...studentUser, isLoggedIn: false };
+    setStudentUser(loggedOutUser);
+    localStorage.removeItem('borqan_student_user');
+  };
 
   const tutorsList = [
     {
@@ -72,13 +97,11 @@ export default function StudentApp({ onNavigateToLanding }) {
   ];
 
   const handleStartCall = (tutor) => {
-    // Access Control Check
     if (studentUser.subscriptionStatus !== 'active') {
       setSelectedTutor(tutor);
       setShowPaymentModal(true);
       return;
     }
-
     setSelectedTutor(tutor);
     setIsCalling(true);
     setActiveTab('call');
@@ -87,56 +110,32 @@ export default function StudentApp({ onNavigateToLanding }) {
   const handlePaymentSubmit = (e) => {
     e.preventDefault();
 
-    if (selectedPaymentMethod === 'fawry' || selectedPaymentMethod === 'visa') {
-      // Automatic Instant Activation for Fawry & Visa
-      setStudentUser({
+    if (selectedPaymentMethod === 'fawry') {
+      const updated = {
         ...studentUser,
         subscriptionStatus: 'active',
         activePlan: 'باقة الشهر الكامل (8 جلسات)',
         sessionsLeft: 8
-      });
-      setPaymentSuccessMessage('تم التفعيل التلقائي الفوري عبر فوري بنجاح! يمكنك الآن بدء الجلسات المباشرة 🎉');
+      };
+      setStudentUser(updated);
+      localStorage.setItem('borqan_student_user', JSON.stringify(updated));
+      setPaymentSuccessMessage('تم التفعيل التلقائي الفوري عبر فوري بنجاح! تم فتح الجلسات المباشرة 🎉');
       setTimeout(() => {
         setShowPaymentModal(false);
         setPaymentSuccessMessage('');
         if (selectedTutor) handleStartCall(selectedTutor);
       }, 2000);
     } else {
-      // Manual Activation for Vodafone Cash / InstaPay
-      setStudentUser({
+      const updated = {
         ...studentUser,
         subscriptionStatus: 'pending_manual',
         paymentRef: vodafoneTxId || 'VOD-884920'
-      });
-      setPaymentSuccessMessage('تم استلام رقم عملية التحويل بنجاح! الطلب قيد التأكيد اليدوي من الإدارة الآن (سيتم التفعيل خلال دقائق).');
+      };
+      setStudentUser(updated);
+      localStorage.setItem('borqan_student_user', JSON.stringify(updated));
+      setPaymentSuccessMessage('تم استلام رقم عملية التحويل بنجاح! الطلب قيد التأكيد اليدوي من الإدارة الآن.');
     }
   };
-
-  // Admin Manual Activation Trigger
-  const handleAdminApprovePayment = () => {
-    setStudentUser({
-      ...studentUser,
-      subscriptionStatus: 'active',
-      activePlan: 'باقة الشهر الكامل (فودافون كاش)',
-      sessionsLeft: 8
-    });
-    setShowPaymentModal(false);
-  };
-
-  const quizQuestions = [
-    {
-      question: 'ما هو الحكم التجويدي في قوله تعالى: (مَن يَقُولُ)؟',
-      options: ['إدغام بغنة', 'إظهار حلقي', 'إقلاب', 'إخفاء حقيقي'],
-      correct: 0,
-      explanation: 'النون الساكنة جاء بعدها حرف الياء (من حروف ينمو)، فحكمها الإدغام بغنة.'
-    },
-    {
-      question: 'أكمل الآية الكريمة: (اهْدِنَا الصِّرَاطَ ...)',
-      options: ['الْمُسْتَقِيمَ', 'الْمَغْضُوبِ', 'الْعَلِيمَ', 'الْحَكِيمَ'],
-      correct: 0,
-      explanation: 'سورة الفاتحة الآية 6: (اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ).'
-    }
-  ];
 
   const surahContent = {
     alfatiha: {
@@ -150,17 +149,80 @@ export default function StudentApp({ onNavigateToLanding }) {
         'اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ (6)',
         'صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ (7)'
       ]
-    },
-    almulk: {
-      name: 'سورة الملك (بداية السورة)',
-      text: [
-        'بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ',
-        'تَبَارَكَ الَّذِي بِيَدِهِ الْمُلْكُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ (1)',
-        'الَّذِي خَلَقَ الْمَوْتَ وَالْحَيَاةَ لِيَبْلُوَكُمْ أَيُّكُمْ أَحْسَنُ عَمَلًا وَهُوَ الْعَزِيزُ الْغَفُورُ (2)'
-      ]
     }
   };
 
+  // IF UNAUTHENTICATED: RENDER TELEGRAM AUTHENTICATION GUARD 📱
+  if (!studentUser.isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-rosewood-950 text-slate-100 font-arabic flex items-center justify-center p-4 selection:bg-peach-200 selection:text-rosewood-950">
+        <div className="bg-rosewood-900 border-2 border-peach-200/30 p-8 rounded-3xl max-w-md w-full text-right space-y-6 shadow-2xl relative overflow-hidden">
+          
+          <div className="flex flex-col items-center justify-center text-center space-y-2">
+            <div className="w-16 h-16 rounded-3xl bg-peach-200/10 border border-peach-200/30 flex items-center justify-center text-peach-200 mb-2">
+              <Send className="w-8 h-8" />
+            </div>
+            <h2 className="text-2xl font-black text-white font-arabic">تسجيل دخول الطلاب عبر تليجرام 📱</h2>
+            <p className="text-xs text-slate-400">يجب تسجيل الدخول بحساب التليجرام الخاص بك عبر @burqan5_bot للوصول لتطبيق الطلاب والجلسات المباشرة.</p>
+          </div>
+
+          <form onSubmit={handleTelegramLoginSubmit} className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-300 block">اسم الطالب المسجل:</label>
+              <input
+                type="text"
+                required
+                value={loginName}
+                onChange={(e) => setLoginName(e.target.value)}
+                className="w-full px-4 py-3 bg-rosewood-950 border border-peach-200/20 rounded-2xl text-xs text-white outline-none"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-300 block">معرف التليجرام (Telegram ID):</label>
+              <input
+                type="text"
+                required
+                value={loginTelegramId}
+                onChange={(e) => setLoginTelegramId(e.target.value)}
+                className="w-full px-4 py-3 bg-rosewood-950 border border-peach-200/20 rounded-2xl text-xs text-white outline-none font-mono dir-ltr text-right"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-300 block">رقم الجوال:</label>
+              <input
+                type="text"
+                required
+                value={loginPhone}
+                onChange={(e) => setLoginPhone(e.target.value)}
+                className="w-full px-4 py-3 bg-rosewood-950 border border-peach-200/20 rounded-2xl text-xs text-white outline-none font-mono dir-ltr text-right"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-4 rounded-2xl bg-peach-200 text-rosewood-950 font-black text-xs hover:bg-peach-100 transition-all flex items-center justify-center gap-2 shadow-card"
+            >
+              <Send className="w-4 h-4 text-rosewood-950" />
+              <span>متابعة وتأكيد الدخول عبر تليجرام (@burqan5_bot)</span>
+            </button>
+          </form>
+
+          <button
+            onClick={onNavigateToLanding}
+            className="w-full py-2 text-center text-xs text-slate-400 hover:text-peach-200 transition-colors flex items-center justify-center gap-1.5"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>العودة للموقع الرئيسي</span>
+          </button>
+
+        </div>
+      </div>
+    );
+  }
+
+  // IF AUTHENTICATED: RENDER FULL STUDENT APP
   return (
     <div className="min-h-screen bg-rosewood-950 text-slate-100 font-arabic selection:bg-peach-200 selection:text-rosewood-950 flex flex-col">
       
@@ -183,7 +245,7 @@ export default function StudentApp({ onNavigateToLanding }) {
                   <BookOpen className="w-5 h-5" />
                 </div>
               </div>
-              <span className="text-lg font-black text-white font-quran">البرقَان <span className="text-xs font-sans text-peach-200 bg-peach-950 px-2 py-0.5 rounded-full border border-peach-200/20">منصة الطلاب</span></span>
+              <span className="text-lg font-black text-white font-quran">البرقَان <span className="text-xs font-sans text-peach-200 bg-peach-950 px-2 py-0.5 rounded-full border border-peach-200/20">تطبيق الطالب 📱</span></span>
             </div>
           </div>
 
@@ -192,6 +254,7 @@ export default function StudentApp({ onNavigateToLanding }) {
             <div className="flex items-center gap-2 bg-rosewood-950 px-3 py-1.5 rounded-2xl border border-peach-200/15 text-xs">
               <User className="w-3.5 h-3.5 text-peach-200" />
               <span className="font-bold text-white">{studentUser.name}</span>
+              <span className="text-[10px] text-peach-200 font-mono">({studentUser.telegramId})</span>
               
               {studentUser.subscriptionStatus === 'active' ? (
                 <span className="bg-emerald-950 text-emerald-300 font-bold px-2.5 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1">
@@ -201,7 +264,7 @@ export default function StudentApp({ onNavigateToLanding }) {
               ) : studentUser.subscriptionStatus === 'pending_manual' ? (
                 <span className="bg-amber-950 text-amber-300 font-bold px-2.5 py-0.5 rounded-full border border-amber-500/30 flex items-center gap-1">
                   <Clock className="w-3 h-3 text-amber-400" />
-                  <span>بانتظار تفعيل الإدارة (فودافون كاش)</span>
+                  <span>بانتظار تفعيل الإدارة</span>
                 </span>
               ) : (
                 <button
@@ -209,18 +272,17 @@ export default function StudentApp({ onNavigateToLanding }) {
                   className="bg-peach-200 text-rosewood-950 font-black px-3 py-0.5 rounded-full hover:bg-peach-100 transition-colors flex items-center gap-1"
                 >
                   <Lock className="w-3 h-3" />
-                  <span>تفعيل الاشتراك الان</span>
+                  <span>تفعيل الاشتراك</span>
                 </button>
               )}
             </div>
 
-            {/* Quick Admin Simulation Trigger */}
             <button
-              onClick={() => setActiveTab('admin')}
-              className="p-2 rounded-xl bg-rosewood-950 hover:bg-rosewood-800 border border-peach-200/20 text-peach-200 transition-colors"
-              title="لوحة الأدمن لتفعيل الاشتراك يدويًا"
+              onClick={handleStudentLogout}
+              className="p-2 rounded-xl bg-rose-950/80 hover:bg-rose-900 border border-rose-800 text-rose-300 transition-colors"
+              title="تسجيل الخروج"
             >
-              <Settings className="w-4 h-4" />
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
 
@@ -233,7 +295,7 @@ export default function StudentApp({ onNavigateToLanding }) {
               }`}
             >
               <User className="w-3.5 h-3.5" />
-              <span>المعلمون</span>
+              <span>المعلمون المتاحون</span>
             </button>
 
             <button
@@ -244,26 +306,6 @@ export default function StudentApp({ onNavigateToLanding }) {
             >
               <Video className="w-3.5 h-3.5" />
               <span>غرفة الجلسة</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('quizzes')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                activeTab === 'quizzes' ? 'bg-peach-200 text-rosewood-950 shadow-md' : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              <Award className="w-3.5 h-3.5" />
-              <span>الاختبارات</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('materials')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                activeTab === 'materials' ? 'bg-peach-200 text-rosewood-950 shadow-md' : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span>المواد</span>
             </button>
           </nav>
 
@@ -284,14 +326,14 @@ export default function StudentApp({ onNavigateToLanding }) {
                   <span className="text-xs text-amber-200">
                     {studentUser.subscriptionStatus === 'pending_manual'
                       ? 'تم استلام رقم عملية فودافون كاش بنجاح وقيد التأكيد اليدوي من الإدارة الآن.'
-                      : 'يلزم الاشتراك في باقة لتشغيل وتفعيل الجلسات المباشرة مع المعلمين.'}
+                      : 'يلزم تفعيل الاشتراك لبدء الجلسات التفاعلية الفردية مع شيوخ ومعلمي القرآن.'}
                   </span>
                 </div>
                 <button
                   onClick={() => setShowPaymentModal(true)}
                   className="px-4 py-1.5 bg-peach-200 text-rosewood-950 rounded-xl font-bold text-xs shrink-0"
                 >
-                  {studentUser.subscriptionStatus === 'pending_manual' ? 'عرض حالة الطلب' : 'تفعيل باقة الجلسات'}
+                  {studentUser.subscriptionStatus === 'pending_manual' ? 'متابعة الحالة' : 'تفعيل باقة الجلسات'}
                 </button>
               </div>
             )}
@@ -346,7 +388,7 @@ export default function StudentApp({ onNavigateToLanding }) {
             <div className="text-center py-20 bg-rosewood-900 border border-peach-200/15 rounded-3xl p-8 space-y-4 max-w-md mx-auto">
               <Lock className="w-12 h-12 text-peach-200 mx-auto" />
               <h3 className="text-xl font-bold text-white">غرفة الجلسات المباشرة مقفلة</h3>
-              <p className="text-xs text-slate-300">قم بتفعيل اشتراكك عبر فوري (تلقائي فوراً) أو فودافون كاش (تأكيد يدوي) لبدء الاتصال بالمعلمين.</p>
+              <p className="text-xs text-slate-300">قم بتفعيل اشتراكك عبر فوري أو فودافون كاش لبدء الاتصال بالمعلمين.</p>
               <button
                 onClick={() => setShowPaymentModal(true)}
                 className="px-6 py-3 bg-peach-200 text-rosewood-950 font-bold rounded-2xl text-xs shadow-card"
@@ -398,66 +440,6 @@ export default function StudentApp({ onNavigateToLanding }) {
           )
         )}
 
-        {/* TAB 3: QUIZZES */}
-        {activeTab === 'quizzes' && (
-          <div className="max-w-2xl mx-auto space-y-6 text-right">
-            <div className="bg-rosewood-900 border border-peach-200/15 p-8 rounded-3xl space-y-6">
-              <h3 className="text-lg font-bold text-white">اختبارات التجويد اليومية</h3>
-              <p className="text-xs text-slate-300">أجب عن الأسئلة واكسب نقاط التميز القرآني.</p>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 4: MATERIALS */}
-        {activeTab === 'materials' && (
-          <div className="space-y-6 text-right">
-            <div className="bg-rosewood-900 border border-peach-200/15 p-6 rounded-3xl">
-              <h2 className="text-xl font-bold text-white">المواد التعليمية والمذكرات Mapped</h2>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 5: SIMULATED ADMIN PANEL */}
-        {activeTab === 'admin' && (
-          <div className="max-w-2xl mx-auto space-y-6 text-right">
-            <div className="bg-rosewood-900 border-2 border-amber-500/40 p-8 rounded-3xl space-y-6 shadow-2xl">
-              <div className="flex items-center justify-between border-b border-peach-200/10 pb-4">
-                <div className="flex items-center gap-2 text-amber-400">
-                  <ShieldCheck className="w-6 h-6" />
-                  <h2 className="text-xl font-bold text-white font-arabic">لوحة تحكم الإدارة (تأكيد المدفوعات اليدوية)</h2>
-                </div>
-                <span className="text-xs text-slate-400 bg-rosewood-950 px-3 py-1 rounded-full border border-peach-200/15">وضع المحاكاة الإدارية</span>
-              </div>
-
-              <div className="space-y-4">
-                <div className="p-4 bg-rosewood-950 rounded-2xl border border-peach-200/15 space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-white">الطالب: {studentUser.name} ({studentUser.phone})</span>
-                    <span className={`px-2 py-0.5 rounded-full font-bold ${
-                      studentUser.subscriptionStatus === 'active' ? 'bg-emerald-950 text-emerald-400' : 'bg-amber-950 text-amber-400'
-                    }`}>
-                      {studentUser.subscriptionStatus === 'active' ? 'مفعل نشط' : 'قيد الانتظار'}
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-slate-400">طريقة الدفع: <strong className="text-peach-200">فودافون كاش / InstaPay</strong></p>
-                  <p className="text-xs text-slate-400">رقم التحويل المرفق: <strong className="text-white font-mono">{studentUser.paymentRef || 'VOD-884920'}</strong></p>
-
-                  <div className="pt-3">
-                    <button
-                      onClick={handleAdminApprovePayment}
-                      className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2"
-                    >
-                      <CheckCircle className="w-4 h-4" />
-                      <span>الموافقة وتفعيل باقة الطالب فوراً (8 جلسات)</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
       </main>
 
       {/* SUBSCRIPTION & PAYMENT MODAL */}
@@ -488,7 +470,6 @@ export default function StudentApp({ onNavigateToLanding }) {
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-200 block">اختر طريقة الدفع المناسبة:</label>
                   
-                  {/* Payment Methods Selector */}
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
@@ -514,14 +495,13 @@ export default function StudentApp({ onNavigateToLanding }) {
                   </div>
                 </div>
 
-                {/* Conditional Fields based on method */}
                 {selectedPaymentMethod === 'vodafone' ? (
                   <div className="space-y-3 p-4 bg-rosewood-950 rounded-2xl border border-peach-200/15 text-xs text-right">
                     <p className="text-slate-300">
                       قم بتحويل المبلغ إلى رقم المحفظة: <strong className="text-peach-200 dir-ltr font-mono">+20 101 988 7766</strong>
                     </p>
                     <div className="space-y-1">
-                      <label className="text-slate-200 font-bold block">أدخل رقم عملية التحويل / رقم الجوال المحول منه:</label>
+                      <label className="text-slate-200 font-bold block">أدخل رقم عملية التحويل / رقم المحفظة المحول منها:</label>
                       <input
                         type="text"
                         required
@@ -535,7 +515,7 @@ export default function StudentApp({ onNavigateToLanding }) {
                 ) : (
                   <div className="p-4 bg-rosewood-950 rounded-2xl border border-peach-200/15 text-xs text-slate-300 space-y-1">
                     <span className="text-emerald-400 font-bold block">تفعيل تلقائي فوري ⚡</span>
-                    <p>سيتم تفعيل الاشتراك وفتح غرفة الجلسات المباشرة فور إتمام الدفع عبر كود فوري المرجعي.</p>
+                    <p>سيتم تفعيل الاشتراك وفتح غرفة الجلسات المباشرة فور إتمام الدفع عبر فوري.</p>
                   </div>
                 )}
 
