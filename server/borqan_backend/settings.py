@@ -52,7 +52,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'borqan_backend.wsgi'
+WSGI_APPLICATION = 'borqan_backend.wsgi.application'
 
 # Database Configuration (PostgreSQL in production, SQLite fallback)
 DATABASES = {
