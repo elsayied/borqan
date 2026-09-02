@@ -3,7 +3,32 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
 from .models import SubscriptionPlan, StudentProfile, Teacher, TeacherApplication, VodafonePaymentRequest, CallSession
+
+class AdminLoginView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+
+        user = authenticate(username=username, password=password)
+
+        if user is not None and (user.is_staff or user.is_superuser):
+            return Response({
+                'message': 'Admin authenticated successfully',
+                'admin_token': f'admin_session_{user.id}_secret_token',
+                'user': {
+                    'username': user.username,
+                    'is_superuser': user.is_superuser
+                }
+            })
+        
+        return Response(
+            {'error': 'بيانات الدخول غير صحيحة أو ليس لديك صلاحيات أدمن الإدارة.'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
 
 class TelegramLoginView(APIView):
     permission_classes = [permissions.AllowAny]

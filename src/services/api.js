@@ -23,7 +23,6 @@ class ApiService {
       
       if (response.status === 401) {
         localStorage.removeItem('borqan_access_token');
-        window.location.hash = '#/app';
       }
 
       if (!response.ok) {
@@ -39,6 +38,13 @@ class ApiService {
   }
 
   // --- API Endpoints ---
+
+  static async adminLogin(username, password) {
+    return this.request('/auth/admin/login/', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    });
+  }
 
   static async loginWithTelegram(telegramData) {
     return this.request('/auth/telegram/', {

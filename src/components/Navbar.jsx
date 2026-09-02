@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, Menu, X, Download, PhoneCall, Globe, Sparkles, UserCheck } from 'lucide-react';
-import ThemeToggle from './ThemeToggle';
 
-export default function Navbar({ onOpenDownload, onOpenFreeSession, onNavigateToTutors }) {
+export default function Navbar({ onOpenDownload, onOpenFreeSession, onNavigateToTutors, onNavigateToApp }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -64,8 +63,13 @@ export default function Navbar({ onOpenDownload, onOpenFreeSession, onNavigateTo
           </nav>
 
           {/* Action Buttons */}
-          <div className="hidden sm:flex items-center gap-3">
-            <ThemeToggle />
+          <div className="hidden sm:flex items-center gap-2">
+            <button
+              onClick={onNavigateToApp}
+              className="px-3 py-2 text-xs font-bold text-peach-200 hover:text-white bg-rosewood-900 border border-peach-200/20 rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
+            >
+              <span>دخول التطبيق 📱</span>
+            </button>
 
             <button
               onClick={onNavigateToTutors}

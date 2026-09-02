@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
 import { BookOpen, Sparkles, Award, ShieldCheck, Clock, Users, Globe, ArrowLeft, CheckCircle, PhoneCall, Send, FileText, Heart, DollarSign, Upload, Music, FileAudio, Link as LinkIcon, Award as CertificateIcon, FileCheck } from 'lucide-react';
-import ThemeToggle from './ThemeToggle';
 
 export default function TutorsLandingPage({ onNavigateToStudents }) {
   const [submitted, setSubmitted] = useState(false);
@@ -104,8 +103,6 @@ export default function TutorsLandingPage({ onNavigateToStudents }) {
           </div>
 
           <div className="flex items-center gap-3">
-            <ThemeToggle />
-
             <button
               onClick={onNavigateToStudents}
               className="px-4 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white bg-slate-900 border border-slate-800 hover:border-emerald-500/30 transition-colors"

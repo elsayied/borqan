@@ -6,75 +6,146 @@
   html {
     scroll-behavior: smooth;
     font-family: 'Tajawal', 'Cairo', sans-serif;
+    background-color: #0c0708;
+    color: #fff6f5;
+  }
+
+  body {
+    background-color: #0c0708;
+    color: #fff6f5;
+    background-image: 
+      radial-gradient(at 50% 0%, rgba(255, 204, 201, 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(255, 204, 201, 0.02) 0px, transparent 50%);
   }
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #091e1b;
+  background: #0c0708;
 }
 ::-webkit-scrollbar-thumb {
-  background: #14b8a6;
-  border-radius: 5px;
+  background: rgba(255, 204, 201, 0.3);
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #0d9488;
+  background: #FFCCC9;
 }
 
-/* Custom Glassmorphism */
+/* Editorial Glass & Card Styling */
 .glass-panel {
-  background: rgba(15, 35, 32, 0.7);
+  background: rgba(22, 14, 16, 0.85);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(20, 184, 166, 0.15);
+  border: 1px solid rgba(255, 204, 201, 0.15);
 }
 
 .glass-card {
-  background: rgba(15, 41, 37, 0.6);
+  background: rgba(22, 14, 16, 0.7);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 204, 201, 0.1);
 }
 
 .glass-card:hover {
-  border-color: rgba(20, 184, 166, 0.35);
-  box-shadow: 0 10px 30px -10px rgba(20, 184, 166, 0.2);
+  border-color: rgba(255, 204, 201, 0.3);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.8);
 }
 
+/* Editorial Warm Peach Typography */
 .gold-gradient-text {
-  background: linear-gradient(135deg, #fef08a 0%, #facc15 50%, #ca8a04 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #FFCCC9 45%, #E59892 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .emerald-gradient-text {
-  background: linear-gradient(135deg, #a7f3d0 0%, #34d399 50%, #059669 100%);
+  background: linear-gradient(135deg, #ffe5e3 0%, #FFCCC9 50%, #d8726a 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-/* Pulse Glow Animation */
-@keyframes pulseGlow {
-  0%, 100% {
-    opacity: 0.4;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.8;
-    transform: scale(1.05);
-  }
+/* Override Legacy Saturated Utility Classes to Anti-AI Warm Peach System */
+.bg-slate-950 {
+  background-color: #0c0708 !important;
+}
+
+.bg-slate-900,
+.bg-slate-900\/80,
+.bg-slate-900\/70,
+.bg-slate-900\/60 {
+  background-color: #160e10 !important;
+  border-color: rgba(255, 204, 201, 0.12) !important;
+}
+
+.bg-slate-800,
+.bg-slate-800\/80 {
+  background-color: #211518 !important;
+  border-color: rgba(255, 204, 201, 0.15) !important;
+  color: #fff6f5 !important;
+}
+
+.bg-emerald-950,
+.bg-emerald-950\/80,
+.bg-emerald-950\/50,
+.bg-emerald-950\/30 {
+  background-color: rgba(64, 13, 10, 0.4) !important;
+  border-color: rgba(255, 204, 201, 0.2) !important;
+}
+
+.text-emerald-400,
+.text-emerald-300 {
+  color: #FFCCC9 !important;
+}
+
+.border-emerald-500\/40,
+.border-emerald-500\/30,
+.border-emerald-500\/20,
+.border-emerald-900\/40,
+.border-emerald-900\/30,
+.border-emerald-800 {
+  border-color: rgba(255, 204, 201, 0.18) !important;
+}
+
+.bg-emerald-500 {
+  background-color: #FFCCC9 !important;
+  color: #0c0708 !important;
+}
+
+.text-amber-400,
+.text-amber-300 {
+  color: #FFCCC9 !important;
+}
+
+.bg-amber-400 {
+  background-color: #FFCCC9 !important;
+  color: #0c0708 !important;
+}
+
+.shadow-glow-gold,
+.shadow-glow {
+  box-shadow: 0 4px 20px -2px rgba(255, 204, 201, 0.25) !important;
+}
+
+.bg-hero-gradient {
+  background: linear-gradient(180deg, #0c0708 0%, #1a0f12 50%, #0c0708 100%) !important;
+}
+
+/* Subtle Pulse */
+@keyframes subtlePulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.9; }
 }
 
 .animate-pulse-glow {
-  animation: pulseGlow 4s infinite ease-in-out;
+  animation: subtlePulse 4s infinite ease-in-out;
 }
 
 /* Audio Wave Animation */
 @keyframes waveBar {
   0%, 100% { height: 6px; }
-  50% { height: 28px; }
+  50% { height: 26px; }
 }
 
 .wave-bar-1 { animation: waveBar 1.2s infinite ease-in-out 0.1s; }

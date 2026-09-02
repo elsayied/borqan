@@ -25,11 +25,11 @@ export function PaymentBadges() {
   ];
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
+    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-3">
       {paymentMethods.map((method, idx) => (
         <div 
           key={idx}
-          className="group relative p-1 bg-slate-900 border border-slate-800 hover:border-emerald-500/40 rounded-2xl shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer"
+          className="group relative p-1 bg-rosewood-900 border border-peach-200/15 hover:border-peach-200/40 rounded-2xl shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer"
         >
           <img 
             src={method.img} 
@@ -41,3 +41,5 @@ export function PaymentBadges() {
     </div>
   );
 }
+
+export default PaymentBadges;
